@@ -11,7 +11,6 @@
             .impact-high { background-color: rgba(255, 0, 0, 0.7); }
             .impact-medium { background-color: rgba(255, 165, 0, 0.5); }
             .impact-low { background-color: rgba(255, 255, 0, 0.3); }
-            .impact-min { background-color: rgba(0, 128, 0, 0.3); } /* Green for minimum */
             .legend { margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; }
             .legend-item { display: inline-block; margin-right: 15px; }
             .legend-color { width: 20px; height: 15px; display: inline-block; vertical-align: middle; margin-right: 5px; border-radius: 3px; }
@@ -19,8 +18,10 @@
             .permutation-item strong { font-weight: bold; color: #555; }
         </style>
     </head>
+    
     <body>
         <h1>RAG Explainability Analysis</h1>
+        <p>Context tokens with impact above <strong>0.5044</strong> and query tokens above <strong>0.3406</strong> are highlighted.</p>
 
         <div class="explanation-section">
             <h2>Token Impact</h2>
@@ -28,17 +29,16 @@
             <div>
                 <h3>Context:</h3>
                 <p>
-    <span class='token-highlight impact-medium' title='Impact: 69.09%'>Marie</span> <span class='token-highlight impact-medium' title='Impact: 57.37%'>Curie</span> was a <span class='token-highlight impact-medium' title='Impact: 39.94%'>physicist</span> and <span class='token-highlight impact-medium' title='Impact: 48.06%'>chemist</span> who <span class='token-highlight impact-high' title='Impact: 74.13%'>conducted</span> <span class='token-highlight impact-high' title='Impact: 100.00%'>pioneering</span> <span class='token-highlight impact-medium' title='Impact: 35.32%'>research</span> on <span class='token-highlight impact-medium' title='Impact: 40.01%'>radioactivity</span> . She was the first <span class='token-highlight impact-medium' title='Impact: 54.07%'>woman</span> to <span class='token-highlight impact-medium' title='Impact: 54.09%'>win</span> a <span class='token-highlight impact-medium' title='Impact: 58.25%'>Nobel</span> <span class='token-highlight impact-low' title='Impact: 24.84%'>Prize</span> , and the only <span class='token-highlight impact-medium' title='Impact: 63.77%'>person</span> to <span class='token-highlight impact-medium' title='Impact: 54.09%'>win</span> <span class='token-highlight impact-medium' title='Impact: 58.25%'>Nobel</span> <span class='token-highlight impact-medium' title='Impact: 31.91%'>Prizes</span> in two <span class='token-highlight impact-high' title='Impact: 76.80%'>different</span> <span class='token-highlight impact-high' title='Impact: 75.17%'>scientific</span> <span class='token-highlight impact-medium' title='Impact: 33.54%'>fields</span> : <span class='token-highlight impact-low' title='Impact: 27.87%'>Physics</span> and <span class='token-highlight impact-low' title='Impact: 24.10%'>Chemistry</span> . Her <span class='token-highlight impact-min' title='Impact: 0.00%'>work</span> <span class='token-highlight impact-high' title='Impact: 82.64%'>led</span> to the <span class='token-highlight impact-low' title='Impact: 22.76%'>development</span> of <span class='token-highlight impact-low' title='Impact: 26.99%'>X</span> - <span class='token-highlight impact-low' title='Impact: 9.44%'>rays</span> in <span class='token-highlight impact-low' title='Impact: 16.92%'>surgery</span> , and she <span class='token-highlight impact-high' title='Impact: 90.21%'>discovered</span> the <span class='token-highlight impact-medium' title='Impact: 45.02%'>elements</span> <span class='token-highlight impact-low' title='Impact: 25.91%'>polonium</span> and <span class='token-highlight impact-medium' title='Impact: 30.53%'>radium</span> . </p>
+    Marie Curie was a physicist and chemist who <span class='token-highlight impact-high' title='Impact: 74.13%'>conducted</span> <span class='token-highlight impact-high' title='Impact: 100.00%'>pioneering</span> research on radioactivity . She was the first woman to win a Nobel Prize , and the only person to win Nobel Prizes in two <span class='token-highlight impact-high' title='Impact: 76.80%'>different</span> <span class='token-highlight impact-high' title='Impact: 75.17%'>scientific</span> fields : Physics and Chemistry . Her work <span class='token-highlight impact-high' title='Impact: 82.64%'>led</span> to the development of X - rays in surgery , and she <span class='token-highlight impact-high' title='Impact: 90.21%'>discovered</span> the elements polonium and radium . </p>
                 <h3>Query:</h3>
                 <p>
-    Who <span class='token-highlight impact-high' title='Impact: 100.00%'>discovered</span> <span class='token-highlight impact-min' title='Impact: 0.00%'>radium</span> and what was their <span class='token-highlight impact-low' title='Impact: 11.20%'>contribution</span> to <span class='token-highlight impact-low' title='Impact: 22.96%'>medicine</span> ? </p>
+    Who <span class='token-highlight impact-high' title='Impact: 100.00%'>discovered</span> radium and what was their contribution to medicine ? </p>
             </div>
             <div class="legend">
                 <h3>Legend: Token Impact</h3>
                 <div class="legend-item"><span class="legend-color impact-high"></span> High Influence</div>
                 <div class="legend-item"><span class="legend-color impact-medium"></span> Medium Influence</div>
                 <div class="legend-item"><span class="legend-color impact-low"></span> Low Influence</div>
-                <div class="legend-item"><span class="legend-color impact-min"></span> Minimum Influence</div>
             </div>
         </div>
 

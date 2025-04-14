@@ -1,0 +1,52 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>RAG Explainability Analysis</title>
+        <style>
+            body { font-family: sans-serif; margin: 20px; }
+            h1, h2 { color: #333; }
+            .explanation-section { margin-bottom: 20px; border: 1px solid #eee; padding: 15px; border-radius: 5px; }
+            .token-highlight { cursor: help; border-radius: 3px; padding: 0.1em 0.3em; color: black; }
+            .impact-high { background-color: rgba(255, 0, 0, 0.7); }
+            .impact-medium { background-color: rgba(255, 165, 0, 0.5); }
+            .impact-low { background-color: rgba(255, 255, 0, 0.3); }
+            .impact-min { background-color: rgba(0, 128, 0, 0.3); } /* Green for minimum */
+            .legend { margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; }
+            .legend-item { display: inline-block; margin-right: 15px; }
+            .legend-color { width: 20px; height: 15px; display: inline-block; vertical-align: middle; margin-right: 5px; border-radius: 3px; }
+            .permutation-item { margin-bottom: 5px; padding: 8px; border: 1px solid #eee; border-radius: 3px; }
+            .permutation-item strong { font-weight: bold; color: #555; }
+        </style>
+    </head>
+    <body>
+        <h1>RAG Explainability Analysis</h1>
+
+        <div class="explanation-section">
+            <h2>Token Impact</h2>
+            <p>The following highlights indicate the influence of each token on the response. Hover over a highlighted word to see its impact percentage.</p>
+            <div>
+                <h3>Context:</h3>
+                <p>
+    <span class='token-highlight impact-medium' title='Impact: 69.09%'>Marie</span> <span class='token-highlight impact-medium' title='Impact: 57.37%'>Curie</span> was a <span class='token-highlight impact-medium' title='Impact: 39.94%'>physicist</span> and <span class='token-highlight impact-medium' title='Impact: 48.06%'>chemist</span> who <span class='token-highlight impact-high' title='Impact: 74.13%'>conducted</span> <span class='token-highlight impact-high' title='Impact: 100.00%'>pioneering</span> <span class='token-highlight impact-medium' title='Impact: 35.32%'>research</span> on <span class='token-highlight impact-medium' title='Impact: 40.01%'>radioactivity</span> . She was the first <span class='token-highlight impact-medium' title='Impact: 54.07%'>woman</span> to <span class='token-highlight impact-medium' title='Impact: 54.09%'>win</span> a <span class='token-highlight impact-medium' title='Impact: 58.25%'>Nobel</span> <span class='token-highlight impact-low' title='Impact: 24.84%'>Prize</span> , and the only <span class='token-highlight impact-medium' title='Impact: 63.77%'>person</span> to <span class='token-highlight impact-medium' title='Impact: 54.09%'>win</span> <span class='token-highlight impact-medium' title='Impact: 58.25%'>Nobel</span> <span class='token-highlight impact-medium' title='Impact: 31.91%'>Prizes</span> in two <span class='token-highlight impact-high' title='Impact: 76.80%'>different</span> <span class='token-highlight impact-high' title='Impact: 75.17%'>scientific</span> <span class='token-highlight impact-medium' title='Impact: 33.54%'>fields</span> : <span class='token-highlight impact-low' title='Impact: 27.87%'>Physics</span> and <span class='token-highlight impact-low' title='Impact: 24.10%'>Chemistry</span> . Her <span class='token-highlight impact-min' title='Impact: 0.00%'>work</span> <span class='token-highlight impact-high' title='Impact: 82.64%'>led</span> to the <span class='token-highlight impact-low' title='Impact: 22.76%'>development</span> of <span class='token-highlight impact-low' title='Impact: 26.99%'>X</span> - <span class='token-highlight impact-low' title='Impact: 9.44%'>rays</span> in <span class='token-highlight impact-low' title='Impact: 16.92%'>surgery</span> , and she <span class='token-highlight impact-high' title='Impact: 90.21%'>discovered</span> the <span class='token-highlight impact-medium' title='Impact: 45.02%'>elements</span> <span class='token-highlight impact-low' title='Impact: 25.91%'>polonium</span> and <span class='token-highlight impact-medium' title='Impact: 30.53%'>radium</span> . </p>
+                <h3>Query:</h3>
+                <p>
+    Who <span class='token-highlight impact-high' title='Impact: 100.00%'>discovered</span> <span class='token-highlight impact-min' title='Impact: 0.00%'>radium</span> and what was their <span class='token-highlight impact-low' title='Impact: 11.20%'>contribution</span> to <span class='token-highlight impact-low' title='Impact: 22.96%'>medicine</span> ? </p>
+            </div>
+            <div class="legend">
+                <h3>Legend: Token Impact</h3>
+                <div class="legend-item"><span class="legend-color impact-high"></span> High Influence</div>
+                <div class="legend-item"><span class="legend-color impact-medium"></span> Medium Influence</div>
+                <div class="legend-item"><span class="legend-color impact-low"></span> Low Influence</div>
+                <div class="legend-item"><span class="legend-color impact-min"></span> Minimum Influence</div>
+            </div>
+        </div>
+
+        <div class="explanation-section">
+            <h2>Context Permutation Impact (if analyzed)</h2>
+    <div class='permutation-item'><strong>Distance: 0.3574</strong> - Context: She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium. Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity.</div><div class='permutation-item'><strong>Distance: 0.3574</strong> - Context: She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry. Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium.</div><div class='permutation-item'><strong>Distance: 0.3552</strong> - Context: Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium.</div><div class='permutation-item'><strong>Distance: 0.3527</strong> - Context: Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium. She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry.</div><div class='permutation-item'><strong>Distance: 0.3476</strong> - Context: Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium. Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry.</div>
+        </div>
+
+    </body>
+    </html>
+    

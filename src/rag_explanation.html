@@ -8,9 +8,6 @@
             h1, h2 { color: #333; }
             .explanation-section { margin-bottom: 20px; border: 1px solid #eee; padding: 15px; border-radius: 5px; }
             .token-highlight { cursor: help; border-radius: 3px; padding: 0.1em 0.3em; color: black; }
-            .impact-high { background-color: rgba(255, 0, 0, 0.7); }
-            .impact-medium { background-color: rgba(255, 165, 0, 0.5); }
-            .impact-low { background-color: rgba(255, 255, 0, 0.3); }
             .legend { margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; }
             .legend-item { display: inline-block; margin-right: 15px; }
             .legend-color { width: 20px; height: 15px; display: inline-block; vertical-align: middle; margin-right: 5px; border-radius: 3px; }
@@ -21,7 +18,7 @@
     
     <body>
         <h1>RAG Explainability Analysis</h1>
-        <p>Context tokens with impact above <strong>0.5044</strong> and query tokens above <strong>0.3406</strong> are highlighted.</p>
+        <p>Context tokens and query tokens are highlighted based on their impact levels.</p>
 
         <div class="explanation-section">
             <h2>Token Impact</h2>
@@ -29,24 +26,30 @@
             <div>
                 <h3>Context:</h3>
                 <p>
-    Marie Curie was a physicist and chemist who <span class='token-highlight impact-high' title='Impact: 74.13%'>conducted</span> <span class='token-highlight impact-high' title='Impact: 100.00%'>pioneering</span> research on radioactivity . She was the first woman to win a Nobel Prize , and the only person to win Nobel Prizes in two <span class='token-highlight impact-high' title='Impact: 76.80%'>different</span> <span class='token-highlight impact-high' title='Impact: 75.17%'>scientific</span> fields : Physics and Chemistry . Her work <span class='token-highlight impact-high' title='Impact: 82.64%'>led</span> to the development of X - rays in surgery , and she <span class='token-highlight impact-high' title='Impact: 90.21%'>discovered</span> the elements polonium and radium . </p>
-                <h3>Query:</h3>
-                <p>
-    Who <span class='token-highlight impact-high' title='Impact: 100.00%'>discovered</span> radium and what was their contribution to medicine ? </p>
+    <span class='token-highlight impact-level-1' title='Impact: 50.40%'>Marie</span> Curie was a physicist and chemist who <span class='token-highlight impact-level-2' title='Impact: 50.53%'>conducted</span> <span class='token-highlight impact-level-3' title='Impact: 51.24%'>pioneering</span> research on radioactivity . She was the first woman to win a Nobel Prize , and the only <span class='token-highlight impact-level-1' title='Impact: 50.25%'>person</span> to win Nobel Prizes in two <span class='token-highlight impact-level-2' title='Impact: 50.61%'>different</span> <span class='token-highlight impact-level-2' title='Impact: 50.56%'>scientific</span> fields : Physics and Chemistry . Her work <span class='token-highlight impact-level-2' title='Impact: 50.77%'>led</span> to the development of X - rays in surgery , and she <span class='token-highlight impact-level-3' title='Impact: 50.97%'>discovered</span> the elements polonium and radium . </p>
+                    <h3>Query:</h3>
+                    <p>
+    Who <span class='token-highlight impact-level-3-query' title='Impact: 34.48%'>discovered</span> radium and what was their contribution to medicine ? </p>
+                </div>
+                <div class="legend">
+                    <h3>Legend: Token Impact</h3>
+    <div class="legend-item"><span class="legend-color" style="background-color: lightcoral;"></span> Context (>0.50)</div><div class="legend-item"><span class="legend-color" style="background-color: salmon;"></span> Context (>0.50)</div><div class="legend-item"><span class="legend-color" style="background-color: red;"></span> Context (>0.51)</div><div class="legend-item"><span class="legend-color" style="background-color: lightblue;"></span> Query (>0.34)</div><div class="legend-item"><span class="legend-color" style="background-color: cornflowerblue;"></span> Query (>0.34)</div><div class="legend-item"><span class="legend-color" style="background-color: blue;"></span> Query (>0.34)</div>
+                </div>
             </div>
-            <div class="legend">
-                <h3>Legend: Token Impact</h3>
-                <div class="legend-item"><span class="legend-color impact-high"></span> High Influence</div>
-                <div class="legend-item"><span class="legend-color impact-medium"></span> Medium Influence</div>
-                <div class="legend-item"><span class="legend-color impact-low"></span> Low Influence</div>
-            </div>
-        </div>
 
-        <div class="explanation-section">
-            <h2>Context Permutation Impact (if analyzed)</h2>
+            <div class="explanation-section">
+                <h2>Context Permutation Impact (if analyzed)</h2>
     <div class='permutation-item'><strong>Distance: 0.3574</strong> - Context: She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium. Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity.</div><div class='permutation-item'><strong>Distance: 0.3574</strong> - Context: She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry. Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium.</div><div class='permutation-item'><strong>Distance: 0.3552</strong> - Context: Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium.</div><div class='permutation-item'><strong>Distance: 0.3527</strong> - Context: Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium. She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry.</div><div class='permutation-item'><strong>Distance: 0.3476</strong> - Context: Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium. Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry.</div>
-        </div>
+            </div>
 
+        <style>
+            .impact-level-1 { background-color: lightcoral; }
+            .impact-level-2 { background-color: salmon; }
+            .impact-level-3 { background-color: red; }
+            .impact-level-1-query { background-color: lightblue; }
+            .impact-level-2-query { background-color: cornflowerblue; }
+            .impact-level-3-query { background-color: blue; }
+        </style>
     </body>
     </html>
     

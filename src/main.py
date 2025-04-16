@@ -49,10 +49,9 @@ def run_analysis(context, query, response, analyze_permutations=True, num_permut
 
 if __name__ == "__main__":
     # Example usage
-    context = "Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium."
-    query = "Who discovered radium and what was their contribution to medicine?"
-    response = "Radium was discovered by Marie Curie, whose research on radioactivity significantly advanced medical imaging, especially through the development of X-rays used in surgery."
-    
+    context = "Our return policy allows customers to return most items within 30 days of delivery for a full refund. Items must be in their original condition and packaging. Some exclusions apply, including clearance items and digital downloads."
+    query = "Can I return a video game I downloaded from your store?"
+    response = "Unfortunately, digital downloads, including video games, are excluded from our return policy and cannot be returned for a refund."
     # Run full analysis with all visualizations
     run_analysis(
         context=context,

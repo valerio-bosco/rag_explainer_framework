@@ -52,6 +52,16 @@ def rag_simulate(context, query):
     """
     return f"Context: {context} Query: {query}"
 
+def remove_and_compute(sentence_tokens, response_embedding, category, token_impact_dict):
+    for i, token in enumerate(sentence_tokens):
+        temp_context = " ".join([t for j, t in enumerate(sentence_tokens) if i != j])
+        if temp_context.strip():
+            temp_response_embedding = get_embedding(temp_context)#rag_simulate(temp_context, query)) # Simulate RAG
+            distance_change = calculate_distance(temp_response_embedding, response_embedding)
+            token_impact_dict[f"{category}_{token}"] = distance_change
+        else:
+            token_impact_dict[f"{category}_{token}"] = 0.0 # If removing the only token, no context
+    
 def explain_by_token_removal(context, query, response):
     """
     Explains the influence of each token in the context and query
@@ -64,24 +74,9 @@ def explain_by_token_removal(context, query, response):
     token_impact = defaultdict(float)
 
     print("Analyzing context tokens...")
-    for i, token in enumerate(context_tokens):
-        temp_context = " ".join([t for j, t in enumerate(context_tokens) if i != j])
-        if temp_context.strip():
-            temp_response_embedding = get_embedding(rag_simulate(temp_context, query)) # Simulate RAG
-            distance_change = calculate_distance(temp_response_embedding, response_embedding)
-            token_impact[f"context_{token}"] = distance_change
-        else:
-            token_impact[f"context_{token}"] = 0.0 # If removing the only token, no context
-
+    remove_and_compute(context_tokens, response_embedding, "context", token_impact)
     print("Analyzing query tokens...")
-    for i, token in enumerate(query_tokens):
-        temp_query = " ".join([t for j, t in enumerate(query_tokens) if i != j])
-        if temp_query.strip():
-            temp_response_embedding = get_embedding(rag_simulate(context, temp_query)) # Simulate RAG
-            distance_change = calculate_distance(temp_response_embedding, response_embedding)
-            token_impact[f"query_{token}"] = distance_change
-        else:
-            token_impact[f"query_{token}"] = 0.0 # If removing the only token, no query
+    remove_and_compute(query_tokens, response_embedding, "query", token_impact)
 
     return token_impact
 

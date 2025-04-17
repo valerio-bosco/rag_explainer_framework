@@ -297,7 +297,8 @@ def explain_by_token_removal(context, query, response):
     by measuring the change in embedding distance of the response
     when each token is removed.
     """
-    response_embedding = get_embedding(response) # Embedding of the actual RAG response
+    response_embedding = get_embedding(query) # Embedding of the actual RAG response
+    
     context_tokens = tokenize_and_filter(context)
     query_tokens = tokenize_and_filter(query)
     token_impact = defaultdict(float)

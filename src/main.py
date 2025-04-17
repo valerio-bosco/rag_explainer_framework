@@ -1,7 +1,7 @@
 # main.py
-from rag_evaluation import analyze_rag
+from rag_evaluation import analyze_rag, get_embedding
 from rag_visualization_html import save_html_report
-from rag_plotting import plot_token_embeddings
+from rag_plotting import plot_token_embeddings, plot_token_impact_distribution
 
 def run_analysis(context, query, response, analyze_permutations=True, num_permutations=5, 
                 generate_html=True, generate_plots=True, html_filename="rag_explanation.html"):
@@ -43,15 +43,17 @@ def run_analysis(context, query, response, analyze_permutations=True, num_permut
     
     # Generate plots if requested
     if generate_plots:
-        plot_token_embeddings(analysis_results)
+        plot_token_embeddings(analysis_results, get_embedding)
     
+    # Return analysis results for further use
+    plot_token_impact_distribution(analysis_results)
     return analysis_results
 
 if __name__ == "__main__":
     # Example usage
-    context = "Our return policy allows customers to return most items within 30 days of delivery for a full refund. Items must be in their original condition and packaging. Some exclusions apply, including clearance items and digital downloads."
-    query = "Can I return a video game I downloaded from your store?"
-    response = "Unfortunately, digital downloads, including video games, are excluded from our return policy and cannot be returned for a refund."
+    context = "Our CRM tool allows users to track customer interactions, schedule follow-ups, and assign leads to sales representatives. The dashboard provides a real-time overview of performance metrics and sales funnels."
+    query = "Can I use the CRM to track follow-ups with clients?"
+    response = "Yes, the CRM tool allows you to schedule and track follow-ups with clients as part of managing customer interactions."
     # Run full analysis with all visualizations
     run_analysis(
         context=context,

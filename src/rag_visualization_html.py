@@ -65,6 +65,8 @@ def visualize_results_html(analysis_results):
                     return "impact-level-2"
                 elif color == 'red':
                     return "impact-level-3"
+                elif color == 'yellow':
+                    return "impact-level-0"
         return None
 
     if context_impacts:
@@ -100,6 +102,8 @@ def visualize_results_html(analysis_results):
                     return "impact-level-2-query"
                 elif color == 'blue':
                     return "impact-level-3-query"
+                elif color == 'green':
+                    return "impact-level-0-query"
         return None
 
     if query_impacts:
@@ -159,9 +163,12 @@ def visualize_results_html(analysis_results):
             .impact-level-1 { background-color: lightcoral; }
             .impact-level-2 { background-color: salmon; }
             .impact-level-3 { background-color: red; }
+            .impact-level-0 { background-color: yellow; }
             .impact-level-1-query { background-color: lightblue; }
             .impact-level-2-query { background-color: cornflowerblue; }
             .impact-level-3-query { background-color: blue; }
+            .impact-level-0-query { background-color: green; }
+            
         </style>
     </body>
     </html>

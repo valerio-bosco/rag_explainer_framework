@@ -1,5 +1,6 @@
 # main.py
-from rag_evaluation import analyze_rag, get_embedding
+from rag_evaluation import analyze_rag
+from embedding_service import get_embedding
 from rag_visualization_html import save_html_report
 from rag_plotting import plot_token_embeddings, plot_token_impact_distribution
 
@@ -51,9 +52,9 @@ def run_analysis(context, query, response, analyze_permutations=True, num_permut
 
 if __name__ == "__main__":
     # Example usage
-    context = "Our CRM tool allows users to track customer interactions, schedule follow-ups, and assign leads to sales representatives. The dashboard provides a real-time overview of performance metrics and sales funnels."
-    query = "Can I use the CRM to track follow-ups with clients?"
-    response = "Yes, the CRM tool allows you to schedule and track follow-ups with clients as part of managing customer interactions."
+    context = "Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium."
+    query = "Who discovered radium and what was their contribution to medicine?"
+    response = "Radium was discovered by Marie Curie, whose research on radioactivity significantly advanced medical imaging, especially through the development of X-rays used in surgery."
     # Run full analysis with all visualizations
     run_analysis(
         context=context,

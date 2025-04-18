@@ -200,13 +200,13 @@ THRESHOLD_CONFIG = {
     "context": {
         "method": "gaussian_average",  # Options: "gaussian_average", "custom", None
         "custom_value": 0.1,           # Value to use if method is "custom"
-        "levels": [0.5, 1.0, 1.5],     # Standard deviations above the mean for levels
+        "levels": [-0.5, 0.0, 0.5],     # Standard deviations above the mean for levels
         "colors": ['lightcoral', 'salmon', 'red'] # Corresponding colors for levels
     },
     "query": {
         "method": "gaussian_average",  # Options: "gaussian_average", "custom", None
         "custom_value": 0.1,           # Value to use if method is "custom"
-        "levels": [0.5, 1.0, 1.5],     # Standard deviations above the mean for levels
+        "levels": [-0.5, 0.0, 0.5],     # Standard deviations above the mean for levels
         "colors": ['lightblue', 'cornflowerblue', 'blue'] # Corresponding colors for levels
     },
 }

@@ -1,6 +1,9 @@
 # rag_visualization_html.py
+import hashlib
 import numpy as np
 import spacy
+
+from rag_evaluation import tokenize_and_filter
 
 # Load spaCy model
 nlp = spacy.load("en_core_web_sm")
@@ -53,8 +56,10 @@ def visualize_results_html(analysis_results):
                 <h3>Context:</h3>
                 <p>
     """
-    context_tokens = nlp(context)
+    context_tokens = tokenize_and_filter(context)
+    print("context tokens:", context_tokens)
     context_impacts = {k.split("context_")[1]: v for k, v in token_impact.items() if k.startswith("context_")}
+    print("context impacts:", context_impacts)
 
     def get_highlight_class(impact, thresholds):
         for threshold, color in reversed(thresholds):
@@ -71,17 +76,21 @@ def visualize_results_html(analysis_results):
 
     if context_impacts:
         context_thresholds_with_colors = thresholds.get("context", [])
+        print(context_tokens)
+        
         for token in context_tokens:
-            if not token.is_stop and not token.is_punct and not token.is_space and token.text in context_impacts:
-                impact = context_impacts[token.text]
+            print(token)
+            key = hashlib.md5(token.encode()).hexdigest()
+            if  key in context_impacts.keys():
+                impact = context_impacts[key]
                 highlight_class = get_highlight_class(impact, context_thresholds_with_colors)
                 percentage = f"{impact * 100:.2f}%"
                 if highlight_class:
-                    html += f"<span class='token-highlight {highlight_class}' title='Impact: {percentage}'>{token.text}</span> "
+                    html += f"<span class='token-highlight {highlight_class}' title='Impact: {percentage}'>{token}</span> "
                 else:
-                    html += f"{token.text} "
+                    html += f"{token} "
             else:
-                html += f"{token.text} "
+                html += f"{token} "
     else:
         html += f"{context} "
     html += "</p>"
@@ -90,7 +99,7 @@ def visualize_results_html(analysis_results):
                     <h3>Query:</h3>
                     <p>
     """
-    query_tokens = nlp(query)
+    query_tokens = tokenize_and_filter(query)
     query_impacts = {k.split("query_")[1]: v for k, v in token_impact.items() if k.startswith("query_")}
 
     def get_query_highlight_class(impact, thresholds):
@@ -109,16 +118,17 @@ def visualize_results_html(analysis_results):
     if query_impacts:
         query_thresholds_with_colors = thresholds.get("query", [])
         for token in query_tokens:
-            if not token.is_stop and not token.is_punct and not token.is_space and token.text in query_impacts:
-                impact = query_impacts[token.text]
+            key = hashlib.md5(token.encode()).hexdigest()
+            if  token in query_impacts.keys():
+                impact = query_impacts[key]
                 highlight_class = get_query_highlight_class(impact, query_thresholds_with_colors)
                 percentage = f"{impact * 100:.2f}%"
                 if highlight_class:
-                    html += f"<span class='token-highlight {highlight_class}' title='Impact: {percentage}'>{token.text}</span> "
+                    html += f"<span class='token-highlight {highlight_class}' title='Impact: {percentage}'>{token}</span> "
                 else:
-                    html += f"{token.text} "
+                    html += f"{token} "
             else:
-                html += f"{token.text} "
+                html += f"{token} "
     else:
         html += f"{query} "
     html += "</p>"

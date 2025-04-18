@@ -5,23 +5,45 @@ from collections import defaultdict
 import itertools
 import embedding_service as es
 
+# def tokenize_and_filter(text):
+    # """Tokenizes text and filters out stop words and punctuation."""
+    # tokenizer_nlp = es.get_tokenizer_nlp()
+    # if tokenizer_nlp == 'fallback':
+    #      # Basic fallback if spaCy isn't available
+    #      tokens = text.lower().split()
+    #      # Very basic stop word list (expand if needed)
+    #      stop_words = {"a", "an", "the", "is", "in", "it", "of", "and", "to"}
+    #      punct = set(".,!?;:'\"()[]{}")
+    #      filtered_tokens = [t for t in tokens if t not in stop_words and not all(c in punct for c in t)]
+    #      return filtered_tokens
+
+    # # Use spaCy for robust tokenization
+    # doc = tokenizer_nlp(text)
+    # filtered_tokens = [token.text for token in doc if not token.is_stop and not token.is_punct and not token.is_space]
+    # return filtered_tokens
+
 def tokenize_and_filter(text):
-    """Tokenizes text and filters out stop words and punctuation."""
+    """Splits text into sentences instead of tokens."""
     tokenizer_nlp = es.get_tokenizer_nlp()
+    
     if tokenizer_nlp == 'fallback':
-         # Basic fallback if spaCy isn't available
-         tokens = text.lower().split()
-         # Very basic stop word list (expand if needed)
-         stop_words = {"a", "an", "the", "is", "in", "it", "of", "and", "to"}
-         punct = set(".,!?;:'\"()[]{}")
-         filtered_tokens = [t for t in tokens if t not in stop_words and not all(c in punct for c in t)]
-         return filtered_tokens
-
-    # Use spaCy for robust tokenization
+        # Basic fallback if spaCy isn't available
+        # Simple sentence splitting by punctuation and cleanup
+        import re
+        
+        # Split on common sentence endings
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        
+        # Remove empty sentences and strip whitespace
+        sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
+        
+        return sentences
+    
+    # Use spaCy for more robust sentence tokenization
     doc = tokenizer_nlp(text)
-    filtered_tokens = [token.text for token in doc if not token.is_stop and not token.is_punct and not token.is_space]
-    return filtered_tokens
-
+    sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
+    
+    return sentences
 def rag_simulate(context, query):
     """
     A very basic simulation of a RAG system.
@@ -33,46 +55,109 @@ def rag_simulate(context, query):
     """
     return f"Context: {context} Query: {query}"
 
-def remove_and_compute(sentence_tokens, original_response_embedding, category, token_impact_dict, original_query):
+# def remove_and_compute(sentence_tokens, original_response_embedding, category, token_impact_dict, original_query):
     """
     Computes the impact of removing each token.
     Note: This implementation measures the change in the embedding of the *remaining text*
     compared to the *original full response embedding*. This is one way to interpret impact.
     An alternative would be to re-simulate the RAG response with the modified text.
     """
-    temp_dict = defaultdict(list)
-    for i, token_to_remove in enumerate(sentence_tokens):
-        # Create the text with the token removed
-        temp_text_list = [t for j, t in enumerate(sentence_tokens) if i != j]
-        temp_text = " ".join(temp_text_list)
+    # temp_dict = defaultdict(list)
+    # for i, token_to_remove in enumerate(sentence_tokens):
+    #     # Create the text with the token removed
+    #     temp_text_list = [t for j, t in enumerate(sentence_tokens) if i != j]
+    #     temp_text = " ".join(temp_text_list)
 
-        impact_values = []
-        if temp_text.strip():
-             # Get embedding of the text *after* removing the token
-            temp_embedding = es.get_embedding(temp_text)
+    #     impact_values = []
+    #     if temp_text.strip():
+    #          # Get embedding of the text *after* removing the token
+    #         temp_embedding = es.get_embedding(temp_text)
 
-            # Calculate distance change compared to the *original* response embedding
-            distance_change = es.calculate_distance(temp_embedding, original_response_embedding)
-            key = f"{category}_{token_to_remove}"
-            if(temp_dict[key]):
-                temp_dict[key].append(distance_change)
+    #         # Calculate distance change compared to the *original* response embedding
+    #         distance_change = es.calculate_distance(temp_embedding, original_response_embedding)
+    #         key = f"{category}_{token_to_remove}"
+    #         if(temp_dict[key]):
+    #             temp_dict[key].append(distance_change)
                 
-            else:
-                temp_dict[key] = [distance_change]
-            impact_values.append(distance_change)
+    #         else:
+    #             temp_dict[key] = [distance_change]
+    #         impact_values.append(distance_change)
                 
-        else:
-            # If removing the token leaves the text empty
-             temp_dict[f"{category}_{token_to_remove}"] = es.calculate_distance(es.get_embedding(""), original_response_embedding) # Distance from empty embedding
+    #     else:
+    #         # If removing the token leaves the text empty
+    #          temp_dict[f"{category}_{token_to_remove}"] = es.calculate_distance(es.get_embedding(""), original_response_embedding) # Distance from empty embedding
 
-    mean_impact = np.mean(impact_values)
+    # mean_impact = np.mean(impact_values)
      
-    print(mean_impact)
-    for key in temp_dict.keys():
-        if(token_impact_dict[key]):
-             token_impact_dict[key].append((np.mean(temp_dict[key]) - mean_impact))
+    # print(mean_impact)
+    # for key in temp_dict.keys():
+    #     if(token_impact_dict[key]):
+    #          token_impact_dict[key].append((np.mean(temp_dict[key]) - mean_impact))
+    #     else:
+    #         token_impact_dict[key]=[(np.mean(temp_dict[key]) - mean_impact)]
+
+def remove_and_compute(sentences, original_response_embedding, category, sentence_impact_dict, original_query):
+    """
+    Computes the impact of removing each sentence.
+    Uses hash of sentences as dictionary keys for consistent lookup.
+    """
+    import hashlib
+    impact_values = []
+    
+    # Process each sentence
+    for i, sentence_to_remove in enumerate(sentences):
+        # Create a hash of the sentence for consistent key generation
+        sentence_hash = hashlib.md5(sentence_to_remove.encode()).hexdigest()
+        
+        # Create text with the current sentence removed
+        remaining_sentences = [s for j, s in enumerate(sentences) if i != j]
+        remaining_text = " ".join(remaining_sentences)
+        
+        if remaining_text.strip():
+            # Get embedding of the text after removing the sentence
+            remaining_embedding = es.get_embedding(remaining_text)
+            
+            # Calculate distance change compared to the original response embedding
+            distance_change = es.calculate_distance(remaining_embedding, original_response_embedding)
+            
+            # Use the hash as the key, but store sentence mapping for reference
+            key = f"{category}_{sentence_hash}"
+            
+            # Optionally maintain a mapping of hashes to original sentences
+            # You could add this as a separate dictionary if needed
+            
+            if key in sentence_impact_dict:
+                sentence_impact_dict[key].append(distance_change)
+            else:
+                sentence_impact_dict[key] = [distance_change]
+                # If you want to store the original sentence text with its hash:
+                # sentence_impact_dict[f"{key}_text"] = sentence_to_remove
+                
+            impact_values.append(distance_change)
         else:
-            token_impact_dict[key]=[(np.mean(temp_dict[key]) - mean_impact)]
+            # If removing the sentence leaves no text
+            empty_distance = es.calculate_distance(es.get_embedding(""), original_response_embedding)
+            key = f"{category}_{sentence_hash}"
+            
+            if key in sentence_impact_dict:
+                sentence_impact_dict[key].append(empty_distance)
+            else:
+                sentence_impact_dict[key] = [empty_distance]
+                # sentence_impact_dict[f"{key}_text"] = sentence_to_remove
+                
+            impact_values.append(empty_distance)
+    
+    # Calculate mean impact across all sentences
+    if impact_values:
+        mean_impact = np.mean(impact_values)
+        print(f"Mean impact: {mean_impact}")
+        
+        # Normalize the impacts relative to the mean
+        for key in list(sentence_impact_dict.keys()):
+            if key.startswith(f"{category}_") and not key.endswith("_text"):
+                normalized_impact = np.mean(sentence_impact_dict[key]) - mean_impact
+                sentence_impact_dict[key] = [normalized_impact]
+    
 
     
 def explain_by_token_removal(context, query, response):
@@ -86,22 +171,27 @@ def explain_by_token_removal(context, query, response):
     
     context_tokens = tokenize_and_filter(context)
     query_tokens = tokenize_and_filter(query)
+    
+    # context_sentence_tokens = tokenize_and_filter_sentence(context)
+    # query_sentence_tokens = tokenize_and_filter_sentence(query)
     token_impact = defaultdict(float)
 
     print("Analyzing context tokens wrt response...")
     # Pass the original response embedding for comparison
     remove_and_compute(context_tokens, response_embedding, "context", token_impact, query)
-
+    # remove_and_compute_sentences(context_sentence_tokens, response_embedding, "context", token_impact, query)
     print("Analyzing query tokens wrt response...")
     # Pass the original response embedding for comparison
     remove_and_compute(query_tokens, response_embedding, "query", token_impact, context) # Pass context if needed by alternative method
+    # remove_and_compute_sentences(query_sentence_tokens, response_embedding, "query", token_impact, context) # Pass context if needed by alternative method
 
 
     print("Analyzing context tokens wrt query...")
     # Pass the original response embedding for comparison
     remove_and_compute(context_tokens, query_embedding, "context", token_impact, query)
-    print(token_impact)
+    # remove_and_compute_sentences(context_sentence_tokens, query_embedding, "context", token_impact, query)   
     
+     
     for key in  token_impact.keys():
         token_impact[key] = np.mean(token_impact[key]) 
 
@@ -264,14 +354,13 @@ def analyze_rag(context, query, response, analyze_permutations=True, num_permuta
 
     # Analyze permutations if requested
     permutation_impact = {}
-    if analyze_permutations:
-        permutation_impact = explain_by_context_permutation(
-            context, query, response, num_permutations=num_permutations
-        )
+    # if analyze_permutations:
+    #     permutation_impact = explain_by_context_permutation(
+    #         context, query, response, num_permutations=num_permutations
+    #     )
 
     # Calculate thresholds
     thresholds = calculate_token_thresholds_with_levels(token_impact, es.THRESHOLD_CONFIG)
-
     print(f"--- Analysis Complete ---")
 
     return {

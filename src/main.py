@@ -4,7 +4,7 @@ from embedding_service import get_embedding
 from rag_visualization_html import save_html_report
 from rag_plotting import plot_token_embeddings, plot_token_impact_distribution
 
-def run_analysis(context, query, response, analyze_permutations=False, num_permutations=5, 
+def run_analysis(context, query, response, analyze_permutations=True, num_permutations=5, 
                 generate_html=True, generate_plots=True, html_filename="rag_explanation.html"):
     """
     Run a complete RAG explainability analysis

@@ -270,9 +270,12 @@ def visualize_results_html(analysis_results):
     permutation_html = ""
     if permutation_impact:
         permutation_html = "<h3>Permutation Impact</h3><ul>"
+        max_perm = permutation_impact["original"]
         for perm, impact in sorted(permutation_impact.items(), key=lambda x: float(x[1]), reverse=True):
-            percentage = (float(impact) / max(float(v) for v in permutation_impact.values())) * 100
-            permutation_html += f"<li>Permutation {perm}: {percentage:.2f}%</li>"
+            if(perm == "original"):
+                continue
+            percentage = (float(impact) / max_perm) * 100 - 100
+            permutation_html += f"<li><div class='context-section'><h2>Permutation</h2> {perm}<p>{'improved with' if percentage > 0 else 'worsened by'} {percentage:.2f}%</p></div></li>"
         permutation_html += "</ul>"
     
     # Create legend for color thresholds

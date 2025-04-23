@@ -186,6 +186,7 @@ def explain_by_context_permutation(context, query, response, num_permutations=5)
     permutations of the context sentences.
     """
     response_embedding = es.get_embedding(response) # Original response embedding
+    context_hash = hashlib.md5(context.encode()).hexdigest() # Hash for consistent key generation
 
     # Use spaCy for sentence splitting
     tokenizer_nlp = es.get_tokenizer_nlp()
@@ -200,12 +201,14 @@ def explain_by_context_permutation(context, query, response, num_permutations=5)
 
     permutation_impact = defaultdict(float)
     unique_permutations = set() # To avoid redundant permutations if num_permutations is large
-    original_context_order = " ".join(sentences)
+
 
     # Ensure the original order is considered if possible within the limit
-    unique_permutations.add(original_context_order)
+    unique_permutations.add(context)
 
-    all_perms = list(itertools.permutations(sentences))
+    all_perms = []
+    for i in range(5):
+        all_perms.append(np.random.permutation(sentences))
     np.random.shuffle(all_perms) # Shuffle to get varied permutations if num_permutations is smaller than total
 
     count = 0
@@ -218,9 +221,9 @@ def explain_by_context_permutation(context, query, response, num_permutations=5)
                  break
 
     # If original wasn't added due to limit, remove one random to make space if needed
-    if original_context_order not in unique_permutations and len(unique_permutations) >= num_permutations:
+    if context not in unique_permutations and len(unique_permutations) >= num_permutations:
          unique_permutations.pop() # Remove a random element
-         unique_permutations.add(original_context_order)
+         unique_permutations.add(context)
 
 
     print(f"Analyzing {len(unique_permutations)} context permutations (including original)...")
@@ -232,7 +235,11 @@ def explain_by_context_permutation(context, query, response, num_permutations=5)
         # Compare the embedding of the *simulated response from permuted context*
         # to the embedding of the *original actual response*
         distance_change =es.calculate_distance(temp_response_embedding, response_embedding)
-        permutation_impact[perm_context] = distance_change # Store distance, not change from original perm
+        permutation_hash = hashlib.md5(perm_context.encode()).hexdigest() # Hash for consistent key generation
+        if permutation_hash == context_hash:
+            permutation_impact["original"] = distance_change # Store distance, not change from original perm
+        else:
+            permutation_impact[perm_context] = distance_change # Store distance, not change from original perm
 
     return permutation_impact
 
@@ -337,10 +344,10 @@ def analyze_rag(context, query, response, analyze_permutations=True, num_permuta
 
     # Analyze permutations if requested
     permutation_impact = {}
-    # if analyze_permutations:
-    #     permutation_impact = explain_by_context_permutation(
-    #         context, query, response, num_permutations=num_permutations
-    #     )
+    if analyze_permutations:
+        permutation_impact = explain_by_context_permutation(
+            context, query, response, num_permutations=num_permutations
+        )
 
     # Calculate thresholds
     thresholds = calculate_token_thresholds_with_levels(token_impact, es.THRESHOLD_CONFIG)

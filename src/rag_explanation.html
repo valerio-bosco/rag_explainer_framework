@@ -1,58 +1,65 @@
 
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
-        <title>RAG Explainability Analysis</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>RAG Analysis Visualization</title>
         <style>
-            body { font-family: sans-serif; margin: 20px; }
-            h1, h2 { color: #333; }
-            .explanation-section { margin-bottom: 20px; border: 1px solid #eee; padding: 15px; border-radius: 5px; }
-            .token-highlight { cursor: help; border-radius: 3px; padding: 0.1em 0.3em; color: black; }
-            .legend { margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; }
-            .legend-item { display: inline-block; margin-right: 15px; }
-            .legend-color { width: 20px; height: 15px; display: inline-block; vertical-align: middle; margin-right: 5px; border-radius: 3px; }
-            .permutation-item { margin-bottom: 5px; padding: 8px; border: 1px solid #eee; border-radius: 3px; }
-            .permutation-item strong { font-weight: bold; color: #555; }
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .container { max-width: 1200px; margin: 0 auto; }
+            .context-section, .query-section , .response-section{ 
+                margin-bottom: 20px; 
+                padding: 20px; 
+                border-radius: 5px;
+                border: 1px solid #ddd;
+            }
+            h2 { color: #333; }
+            span { padding: 2px 0; }
+            .legend-container { 
+                display: flex; 
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+            .legend { 
+                margin-right: 20px; 
+                padding: 10px; 
+                border: 1px solid #ddd; 
+                border-radius: 5px; 
+                margin-bottom: 20px;
+            }
+            ul { list-style-type: none; padding-left: 10px; }
+            li { margin-bottom: 5px; }
         </style>
     </head>
-    
     <body>
-        <h1>RAG Explainability Analysis</h1>
-        <p>Context tokens and query tokens are highlighted based on their impact levels.</p>
-
-        <div class="explanation-section">
-            <h2>Token Impact</h2>
-            <p>The following highlights indicate the influence of each token on the response. Hover over a highlighted word to see its impact percentage.</p>
-            <div>
-                <h3>Context:</h3>
-                <p>
-    <span class='token-highlight impact-level-3' title='Impact: -15.04%'>Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy stored in glucose.</span> <span class='token-highlight impact-level-3' title='Impact: -16.06%'>This process occurs mainly in the chloroplasts of plant cells, which contain the green pigment chlorophyll.</span> <span class='token-highlight impact-level-1' title='Impact: -16.48%'>Chlorophyll captures sunlight, initiating the light-dependent reactions.</span> <span class='token-highlight impact-level-3' title='Impact: -15.83%'>These reactions occur in the thylakoid membranes, where sunlight is used to split water molecules into oxygen, protons, and electrons.</span> <span class='token-highlight impact-level-2' title='Impact: -16.28%'>The oxygen is released as a byproduct into the atmosphere.</span> <span class='token-highlight impact-level-1' title='Impact: -16.42%'>The electrons move through the electron transport chain, generating ATP and NADPH.</span> <span class='token-highlight impact-level-3' title='Impact: -15.42%'>These energy carriers are then used in the light-independent reactions, also known as the Calvin cycle, which take place in the stroma of the chloroplast.</span> <span class='token-highlight impact-level-2' title='Impact: -16.36%'>In the Calvin cycle, carbon dioxide from the air is fixed into glucose using the ATP and NADPH produced earlier.</span> <span class='token-highlight impact-level-3' title='Impact: -15.80%'>This entire process not only supports plant life but also provides the base of the food chain for nearly all life on Earth.</span> <span class='token-highlight impact-level-3' title='Impact: -15.73%'>Factors that affect the rate of photosynthesis include light intensity, carbon dioxide concentration, and temperature.</span> If any of these are too low or too high, they can become limiting factors, slowing down the overall process. For instance, low light intensity reduces the production of ATP and NADPH, while extreme temperatures can denature the enzymes involved in the Calvin cycle. On the other hand, increased CO levels can enhance the rate of photosynthesis up to a certain point. Plants have also evolved various adaptations to optimize photosynthesis under different environmental conditions. For example, some plants that live in very hot and dry environments, such as cacti, use a modified form of photosynthesis known as CAM (Crassulacean Acid Metabolism), which allows them to fix carbon dioxide at night to minimize water loss. Other plants, like corn and sugarcane, use the C4 pathway to increase the efficiency of carbon fixation in high light and temperature conditions. These adaptations highlight the importance of photosynthesis not only in sustaining life but in driving evolutionary responses to environmental pressures. </p>
-                    <h3>Query:</h3>
-                    <p>
-    Can you explain the process of photosynthesis in detail, including where it occurs in the cell, what the main stages are, what products are formed, and how environmental factors and plant adaptations affect the efficiency of the process? </p>
+        <div class="container">
+            <h1>RAG Analysis Visualization</h1>
+            
+            <div class="legend-container">
+                <div class="legend">
+                    <h4>Context Impact Legend</h4><ul><li><span style="display:inline-block; width:20px; height:20px; background-color:lightcoral;"></span> > 50.0000</li><li><span style="display:inline-block; width:20px; height:20px; background-color:salmon;"></span> > 75.0000</li><li><span style="display:inline-block; width:20px; height:20px; background-color:red;"></span> > 87.5000</li></ul>
                 </div>
                 <div class="legend">
-                    <h3>Legend: Token Impact</h3>
-    <div class="legend-item"><span class="legend-color" style="background-color: lightcoral;"></span> Context (>-0.17)</div><div class="legend-item"><span class="legend-color" style="background-color: salmon;"></span> Context (>-0.16)</div><div class="legend-item"><span class="legend-color" style="background-color: red;"></span> Context (>-0.16)</div><div class="legend-item"><span class="legend-color" style="background-color: lightblue;"></span> Query (>0.00)</div><div class="legend-item"><span class="legend-color" style="background-color: cornflowerblue;"></span> Query (>0.00)</div><div class="legend-item"><span class="legend-color" style="background-color: blue;"></span> Query (>0.00)</div>
+                    <h4>Query Impact Legend</h4><ul><li><span style="display:inline-block; width:20px; height:20px; background-color:lightblue;"></span> > 0.00000000</li><li><span style="display:inline-block; width:20px; height:20px; background-color:cornflowerblue;"></span> > 0.50000000</li><li><span style="display:inline-block; width:20px; height:20px; background-color:blue;"></span> > 0.75000000</li></ul>
                 </div>
             </div>
-
-            <div class="explanation-section">
-                <h2>Context Permutation Impact (if analyzed)</h2>
-    <p>Context permutation analysis was not performed.</p>
-            </div>
-
-        <style>
-            .impact-level-1 { background-color: lightcoral; }
-            .impact-level-2 { background-color: salmon; }
-            .impact-level-3 { background-color: red; }
-            .impact-level-0 { background-color: yellow; }
-            .impact-level-1-query { background-color: lightblue; }
-            .impact-level-2-query { background-color: cornflowerblue; }
-            .impact-level-3-query { background-color: blue; }
-            .impact-level-0-query { background-color: green; }
             
-        </style>
+            <div class="query-section">
+                <h2>Query</h2>
+                <p>Can you explain the process of photosynthesis in detail, including where it occurs in the cell, what the main stages are, what products are formed, and how environmental factors and plant adaptations affect the efficiency of the process?</p>
+            </div>
+            
+            <div class="context-section">
+                <h2>Context</h2>
+                <p><span style="background-color: inherit;" title="Impact: 41.04%">Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy stored in glucose.</span><span style="background-color: inherit;" title="Impact: 34.72%">This process occurs mainly in the chloroplasts of plant cells, which contain the green pigment chlorophyll.</span><span style="background-color: inherit;" title="Impact: 47.89%">Chlorophyll captures sunlight, initiating the light-dependent reactions.</span><span style="background-color: lightcoral;" title="Impact: 53.70%">These reactions occur in the thylakoid membranes, where sunlight is used to split water molecules into oxygen, protons, and electrons.</span><span style="background-color: lightcoral;" title="Impact: 55.20%">The oxygen is released as a byproduct into the atmosphere.</span><span style="background-color: lightcoral;" title="Impact: 51.91%">The electrons move through the electron transport chain, generating ATP and NADPH.</span><span style="background-color: lightcoral;" title="Impact: 64.81%">These energy carriers are then used in the light-independent reactions, also known as the Calvin cycle, which take place in the stroma of the chloroplast.</span><span style="background-color: inherit;" title="Impact: 48.13%">In the Calvin cycle, carbon dioxide from the air is fixed into glucose using the ATP and NADPH produced earlier.</span><span style="background-color: lightcoral;" title="Impact: 73.65%">This entire process not only supports plant life but also provides the base of the food chain for nearly all life on Earth.</span><span style="background-color: lightcoral;" title="Impact: 62.42%">Factors that affect the rate of photosynthesis include light intensity, carbon dioxide concentration, and temperature.</span><span style="background-color: lightcoral;" title="Impact: 60.22%">If any of these are too low or too high, they can become limiting factors, slowing down the overall process.</span><span style="background-color: inherit;" title="Impact: 30.69%">For instance, low light intensity reduces the production of ATP and NADPH, while extreme temperatures can denature the enzymes involved in the Calvin cycle.</span><span style="background-color: inherit;" title="Impact: 32.77%">On the other hand, increased CO levels can enhance the rate of photosynthesis up to a certain point.</span><span style="background-color: lightcoral;" title="Impact: 50.70%">Plants have also evolved various adaptations to optimize photosynthesis under different environmental conditions.</span><span style="background-color: inherit;" title="Impact: 24.68%">For example, some plants that live in very hot and dry environments, such as cacti, use a modified form of photosynthesis known as CAM (Crassulacean Acid Metabolism), which allows them to fix carbon dioxide at night to minimize water loss.</span><span style="background-color: lightcoral;" title="Impact: 51.69%">Other plants, like corn and sugarcane, use the C4 pathway to increase the efficiency of carbon fixation in high light and temperature conditions.</span><span style="background-color: lightcoral;" title="Impact: 65.79%">These adaptations highlight the importance of photosynthesis not only in sustaining life but in driving evolutionary responses to environmental pressures.</span></p>
+            </div>
+             <div class="response-section">
+                <h2>Response</h2>
+                <p>Certainly! Photosynthesis is the biological process through which plants, algae, and some bacteria convert light energy from the sun into chemical energy stored in the form of glucose. This process is fundamental to life on Earth because it is the primary means by which energy enters the food chain and because it produces the oxygen we breathe. Photosynthesis takes place primarily in the chloroplasts of plant cells. These specialized organelles contain chlorophyll, a green pigment that is crucial for capturing light energy. Within the chloroplasts, two main stages of photosynthesis occur: the light-dependent reactions and the light-independent reactions, also called the Calvin cycle. The light-dependent reactions happen in the thylakoid membranes of the chloroplasts. During this stage, chlorophyll absorbs light energy, which is then used to split water molecules into hydrogen ions (protons), electrons, and oxygen. The oxygen is released as a byproduct into the atmosphere, which is vital for aerobic life. Meanwhile, the electrons move through a series of proteins known as the electron transport chain, and this movement generates energy used to produce two energy-carrying molecules: ATP (adenosine triphosphate) and NADPH (nicotinamide adenine dinucleotide phosphate). These two molecules, ATP and NADPH, are then utilized in the second stage, the Calvin cycle, which takes place in the stroma of the chloroplast. In the Calvin cycle, the plant takes in carbon dioxide (CO) from the air through tiny pores in its leaves called stomata. The carbon dioxide is then fixed, or incorporated, into an organic molecule. Using the energy from ATP and the reducing power from NADPH, the plant synthesizes glucose, a simple sugar that stores chemical energy and can later be used for growth, development, or storage. The rate at which photosynthesis occurs can be influenced by several environmental factors, often referred to as limiting factors. One such factor is light intensity. If light levels are low, there isn’t enough energy to drive the light-dependent reactions efficiently, reducing ATP and NADPH production. Another factor is the concentration of carbon dioxide. Since CO is a raw material in the Calvin cycle, low levels can limit glucose production. Temperature also plays a role because the enzymes involved in both stages of photosynthesis have optimal operating ranges; if temperatures are too high or too low, enzyme activity decreases, which slows down the overall process. To cope with varying environmental conditions, plants have evolved adaptations that enhance photosynthesis. For example, CAM plants, such as cacti and succulents, open their stomata at night to take in CO and close them during the day to conserve water. They store the CO as an acid that is later broken down during the day to release CO for photosynthesis. This adaptation helps them survive in arid environments. Similarly, C4 plants, such as corn and sugarcane, use a different biochemical pathway that allows them to efficiently fix CO even when concentrations are low and temperatures are high. This makes them more productive under certain climate conditions. In summary, photosynthesis is a complex but well-organized process that occurs in the chloroplasts and involves two key stages: light-dependent reactions and the Calvin cycle. It produces oxygen and glucose, which are essential for life. Its efficiency depends on several environmental variables, and over time, plants have developed ingenious strategies to optimize the process based on their surroundings.</p>
+            </div>    
+            
+        </div>
     </body>
     </html>
     

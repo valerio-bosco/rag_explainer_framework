@@ -4,6 +4,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict
 import itertools
 import embedding_service as es
+import hashlib
 
 # def tokenize_and_filter(text):
     # """Tokenizes text and filters out stop words and punctuation."""
@@ -101,8 +102,8 @@ def remove_and_compute(sentences, original_response_embedding, category, sentenc
     Computes the impact of removing each sentence.
     Uses hash of sentences as dictionary keys for consistent lookup.
     """
-    import hashlib
     impact_values = []
+    new_sentence_impact_dict = defaultdict(list)
     
     # Process each sentence
     for i, sentence_to_remove in enumerate(sentences):
@@ -112,52 +113,41 @@ def remove_and_compute(sentences, original_response_embedding, category, sentenc
         # Create text with the current sentence removed
         remaining_sentences = [s for j, s in enumerate(sentences) if i != j]
         remaining_text = " ".join(remaining_sentences)
-        
+
+        text_to_evaluate = ""
         if remaining_text.strip():
-            # Get embedding of the text after removing the sentence
-            remaining_embedding = es.get_embedding(remaining_text)
-            
-            # Calculate distance change compared to the original response embedding
-            distance_change = es.calculate_distance(remaining_embedding, original_response_embedding)
-            
-            # Use the hash as the key, but store sentence mapping for reference
-            key = f"{category}_{sentence_hash}"
-            
-            # Optionally maintain a mapping of hashes to original sentences
-            # You could add this as a separate dictionary if needed
-            
-            if key in sentence_impact_dict:
-                sentence_impact_dict[key].append(distance_change)
-            else:
-                sentence_impact_dict[key] = [distance_change]
-                # If you want to store the original sentence text with its hash:
-                # sentence_impact_dict[f"{key}_text"] = sentence_to_remove
-                
-            impact_values.append(distance_change)
-        else:
-            # If removing the sentence leaves no text
-            empty_distance = es.calculate_distance(es.get_embedding(""), original_response_embedding)
-            key = f"{category}_{sentence_hash}"
-            
-            if key in sentence_impact_dict:
-                sentence_impact_dict[key].append(empty_distance)
-            else:
-                sentence_impact_dict[key] = [empty_distance]
-                # sentence_impact_dict[f"{key}_text"] = sentence_to_remove
-                
-            impact_values.append(empty_distance)
+            text_to_evaluate = remaining_text
     
+        text_to_evaluate_embedding = es.get_embedding(text_to_evaluate)
+        distance_change = es.calculate_distance(text_to_evaluate_embedding, original_response_embedding)
+        
+        key = f"{category}_{sentence_hash}"
+        if key in new_sentence_impact_dict:
+            new_sentence_impact_dict[key].append(distance_change)
+        else:
+            new_sentence_impact_dict[key] = [distance_change]
+            
+        impact_values.append(distance_change)
+       
     # Calculate mean impact across all sentences
     if impact_values:
         mean_impact = np.mean(impact_values)
-        print(f"Mean impact: {mean_impact}")
-        
+        std_impact = np.std(impact_values) if np.std(impact_values) > 0 else 1
+
+        max_impact = 1
         # Normalize the impacts relative to the mean
-        for key in list(sentence_impact_dict.keys()):
-            if key.startswith(f"{category}_") and not key.endswith("_text"):
-                normalized_impact = np.mean(sentence_impact_dict[key]) - mean_impact
+        for key, values in new_sentence_impact_dict.items():
+            normalized_impact = (np.mean(values) - mean_impact) / (std_impact)  
+            if normalized_impact > max_impact:
+                max_impact = normalized_impact          
+            if(key in sentence_impact_dict):
+                sentence_impact_dict[key].append(normalized_impact)
+            else:
                 sentence_impact_dict[key] = [normalized_impact]
-    
+        
+        for key, values in sentence_impact_dict.items():
+            sentence_impact_dict[key] = [v / max_impact for v in values]  # Normalize by max impact (to make the range in -1, 1)
+
 
     
 def explain_by_token_removal(context, query, response):
@@ -169,31 +159,23 @@ def explain_by_token_removal(context, query, response):
     response_embedding = es.get_embedding(response) # Embedding of the actual RAG response
     query_embedding = es.get_embedding(query)
     
-    context_tokens = tokenize_and_filter(context)
-    query_tokens = tokenize_and_filter(query)
+    context_sentences = tokenize_and_filter(context)
+    query_sentences = tokenize_and_filter(query)
     
-    # context_sentence_tokens = tokenize_and_filter_sentence(context)
-    # query_sentence_tokens = tokenize_and_filter_sentence(query)
-    token_impact = defaultdict(float)
+    token_impact = defaultdict(list)
 
     print("Analyzing context tokens wrt response...")
-    # Pass the original response embedding for comparison
-    remove_and_compute(context_tokens, response_embedding, "context", token_impact, query)
-    # remove_and_compute_sentences(context_sentence_tokens, response_embedding, "context", token_impact, query)
-    print("Analyzing query tokens wrt response...")
-    # Pass the original response embedding for comparison
-    remove_and_compute(query_tokens, response_embedding, "query", token_impact, context) # Pass context if needed by alternative method
-    # remove_and_compute_sentences(query_sentence_tokens, response_embedding, "query", token_impact, context) # Pass context if needed by alternative method
-
-
-    print("Analyzing context tokens wrt query...")
-    # Pass the original response embedding for comparison
-    remove_and_compute(context_tokens, query_embedding, "context", token_impact, query)
-    # remove_and_compute_sentences(context_sentence_tokens, query_embedding, "context", token_impact, query)   
+    remove_and_compute(context_sentences, response_embedding, "context", token_impact, query)
     
-     
+    print("Analyzing context tokens wrt query...")
+    remove_and_compute(context_sentences, query_embedding, "context", token_impact, query)
+
+    print("Analyzing query tokens wrt response...")
+    remove_and_compute(query_sentences, response_embedding, "query", token_impact, context) 
+   
     for key in  token_impact.keys():
-        token_impact[key] = np.mean(token_impact[key]) 
+        token_impact[key] = np.mean(token_impact[key])
+    
 
     return token_impact
 
@@ -282,7 +264,8 @@ def calculate_token_thresholds_with_levels(token_impact, threshold_config):
                 std = 1e-9 # Use a small epsilon if std dev is effectively zero
 
             for i, level in enumerate(levels):
-                threshold = avg + level * std
+                threshold = avg + level 
+                print(f"Threshold {i}: {threshold:.8f} (Level: {level})")
                 color = colors[i] if i < len(colors) else 'gray'
                 threshold_colors.append((threshold, color))
             return sorted(threshold_colors) # Sort by threshold value ascending

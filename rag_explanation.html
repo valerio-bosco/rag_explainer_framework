@@ -1,58 +1,62 @@
 
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
-        <title>RAG Explainability Analysis</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>RAG Analysis Visualization</title>
         <style>
-            body { font-family: sans-serif; margin: 20px; }
-            h1, h2 { color: #333; }
-            .explanation-section { margin-bottom: 20px; border: 1px solid #eee; padding: 15px; border-radius: 5px; }
-            .token-highlight { cursor: help; border-radius: 3px; padding: 0.1em 0.3em; color: black; }
-            .legend { margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; }
-            .legend-item { display: inline-block; margin-right: 15px; }
-            .legend-color { width: 20px; height: 15px; display: inline-block; vertical-align: middle; margin-right: 5px; border-radius: 3px; }
-            .permutation-item { margin-bottom: 5px; padding: 8px; border: 1px solid #eee; border-radius: 3px; }
-            .permutation-item strong { font-weight: bold; color: #555; }
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .container { max-width: 1200px; margin: 0 auto; }
+            .context-section, .query-section { 
+                margin-bottom: 20px; 
+                padding: 20px; 
+                border-radius: 5px;
+                border: 1px solid #ddd;
+            }
+            h2 { color: #333; }
+            span { padding: 2px 0; }
+            .legend-container { 
+                display: flex; 
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+            .legend { 
+                margin-right: 20px; 
+                padding: 10px; 
+                border: 1px solid #ddd; 
+                border-radius: 5px; 
+                margin-bottom: 20px;
+            }
+            ul { list-style-type: none; padding-left: 10px; }
+            li { margin-bottom: 5px; }
         </style>
     </head>
-    
     <body>
-        <h1>RAG Explainability Analysis</h1>
-        <p>Context tokens and query tokens are highlighted based on their impact levels.</p>
-
-        <div class="explanation-section">
-            <h2>Token Impact</h2>
-            <p>The following highlights indicate the influence of each token on the response. Hover over a highlighted word to see its impact percentage.</p>
-            <div>
-                <h3>Context:</h3>
-                <p>
-    Marie Curie was a physicist and chemist who conducted pioneering research on radioactivity. She was the first woman to win a Nobel Prize, and the only person to win Nobel Prizes in two different scientific fields: Physics and Chemistry. Her work led to the development of X-rays in surgery, and she discovered the elements polonium and radium. </p>
-                    <h3>Query:</h3>
-                    <p>
-    Who discovered radium and what was their contribution to medicine? </p>
+        <div class="container">
+            <h1>RAG Analysis Visualization</h1>
+            
+            <div class="legend-container">
+                <div class="legend">
+                    <h4>Context Impact Legend</h4><ul><li><span style="display:inline-block; width:20px; height:20px; background-color:lightcoral;"></span> > -23.48595150</li><li><span style="display:inline-block; width:20px; height:20px; background-color:salmon;"></span> > 23.48600212</li><li><span style="display:inline-block; width:20px; height:20px; background-color:red;"></span> > 70.45795573</li><li><span style="display:inline-block; width:20px; height:20px; background-color:yellow;"></span> > 93.94393254</li></ul>
                 </div>
                 <div class="legend">
-                    <h3>Legend: Token Impact</h3>
-    <div class="legend-item"><span class="legend-color" style="background-color: lightcoral;"></span> Context (>0.00)</div><div class="legend-item"><span class="legend-color" style="background-color: salmon;"></span> Context (>0.00)</div><div class="legend-item"><span class="legend-color" style="background-color: red;"></span> Context (>0.00)</div><div class="legend-item"><span class="legend-color" style="background-color: lightblue;"></span> Query (>0.00)</div><div class="legend-item"><span class="legend-color" style="background-color: cornflowerblue;"></span> Query (>0.00)</div><div class="legend-item"><span class="legend-color" style="background-color: blue;"></span> Query (>0.00)</div>
+                    <h4>Query Impact Legend</h4><ul><li><span style="display:inline-block; width:20px; height:20px; background-color:lightblue;"></span> > -0.00000000</li><li><span style="display:inline-block; width:20px; height:20px; background-color:cornflowerblue;"></span> > 0.00000000</li><li><span style="display:inline-block; width:20px; height:20px; background-color:blue;"></span> > 0.00000000</li><li><span style="display:inline-block; width:20px; height:20px; background-color:black;"></span> > 0.00000000</li></ul>
                 </div>
             </div>
-
-            <div class="explanation-section">
-                <h2>Context Permutation Impact (if analyzed)</h2>
-    <p>Context permutation analysis was not performed.</p>
-            </div>
-
-        <style>
-            .impact-level-1 { background-color: lightcoral; }
-            .impact-level-2 { background-color: salmon; }
-            .impact-level-3 { background-color: red; }
-            .impact-level-0 { background-color: yellow; }
-            .impact-level-1-query { background-color: lightblue; }
-            .impact-level-2-query { background-color: cornflowerblue; }
-            .impact-level-3-query { background-color: blue; }
-            .impact-level-0-query { background-color: green; }
             
-        </style>
+            <div class="query-section">
+                <h2>Query</h2>
+                <p>Can you explain the process of photosynthesis in detail, including where it occurs in the cell, what the main stages are, what products are formed, and how environmental factors and plant adaptations affect the efficiency of the process?</p>
+            </div>
+            
+            <div class="context-section">
+                <h2>Context</h2>
+                <p><span style="background-color: lightcoral;" title="Impact: 11.93%">Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy stored in glucose.</span><span style="background-color: salmon;" title="Impact: 29.52%">This process occurs mainly in the chloroplasts of plant cells, which contain the green pigment chlorophyll.</span><span style="background-color: lightcoral;" title="Impact: 13.41%">Chlorophyll captures sunlight, initiating the light-dependent reactions.</span><span style="background-color: lightcoral;" title="Impact: 16.57%">These reactions occur in the thylakoid membranes, where sunlight is used to split water molecules into oxygen, protons, and electrons.</span><span style="background-color: salmon;" title="Impact: 32.81%">The oxygen is released as a byproduct into the atmosphere.</span><span style="background-color: lightcoral;" title="Impact: 15.11%">The electrons move through the electron transport chain, generating ATP and NADPH.</span><span style="background-color: salmon;" title="Impact: 30.77%">These energy carriers are then used in the light-independent reactions, also known as the Calvin cycle, which take place in the stroma of the chloroplast.</span><span style="background-color: salmon;" title="Impact: 36.36%">In the Calvin cycle, carbon dioxide from the air is fixed into glucose using the ATP and NADPH produced earlier.</span><span style="background-color: salmon;" title="Impact: 54.76%">This entire process not only supports plant life but also provides the base of the food chain for nearly all life on Earth.</span><span style="background-color: yellow;" title="Impact: 100.00%">Factors that affect the rate of photosynthesis include light intensity, carbon dioxide concentration, and temperature.</span><span style="background-color: lightcoral;" title="Impact: 22.27%">If any of these are too low or too high, they can become limiting factors, slowing down the overall process.</span><span style="background-color: lightcoral;" title="Impact: 4.02%">For instance, low light intensity reduces the production of ATP and NADPH, while extreme temperatures can denature the enzymes involved in the Calvin cycle.</span><span style="background-color: lightcoral;" title="Impact: 6.34%">On the other hand, increased CO levels can enhance the rate of photosynthesis up to a certain point.</span><span style="background-color: lightcoral;" title="Impact: 6.34%">Plants have also evolved various adaptations to optimize photosynthesis under different environmental conditions.</span><span style="background-color: lightcoral;" title="Impact: 6.34%">For example, some plants that live in very hot and dry environments, such as cacti, use a modified form of photosynthesis known as CAM (Crassulacean Acid Metabolism), which allows them to fix carbon dioxide at night to minimize water loss.</span><span style="background-color: lightcoral;" title="Impact: 6.34%">Other plants, like corn and sugarcane, use the C4 pathway to increase the efficiency of carbon fixation in high light and temperature conditions.</span><span style="background-color: lightcoral;" title="Impact: 6.34%">These adaptations highlight the importance of photosynthesis not only in sustaining life but in driving evolutionary responses to environmental pressures.</span></p>
+            </div>
+            
+            
+        </div>
     </body>
     </html>
     

@@ -228,45 +228,43 @@ def visualize_results_html(analysis_results):
     context_sentences = tokenize_and_filter(context)
     context_html = []
     
-    # Map hashes back to tokens for highlighting
-    context_hash_to_token = {}
     for sentence in context_sentences:
         token_hash = "context_"+hashlib.md5(sentence.encode()).hexdigest()
-        context_hash_to_token[token_hash] = sentence
-    # Create highlighted HTML for context
-    for token_hash, impact_value in context_impacts.items():
-        if token_hash in context_hash_to_token:
-            token = context_hash_to_token[token_hash]
+        if token_hash in context_impacts.keys():
+            
+            impact_value = context_impacts[token_hash]
             color = get_color_for_value(impact_value, thresholds["context"])
             percentage = calculate_percentage(impact_value, context_impacts)
             
             # Create span with tooltip showing impact percentage
-            span = f'<span style="background-color: {color};" title="Impact: {percentage:.2f}%">{token}</span>'
+            span = f'<span style="background-color: {color};" title="Impact: {percentage:.2f}%">{sentence}</span>'
             context_html.append(span)
+        else:
+            # If token not found in context impacts, add it without highlighting
+            context_html.append(sentence)
+
     
     # Process query highlighting if query impacts exist
-    query_tokens = tokenize_and_filter(query)
+    query_sentences = tokenize_and_filter(query)
+    query_impacts = {k: v for k, v in token_impact.items() if k.startswith("query_")}
     query_html = []
     
     # Map hashes for query tokens
-    query_hash_to_token = {}
-    for token in query_tokens:
-        token_hash = hashlib.md5(token.encode()).hexdigest()
-        query_hash_to_token[token_hash] = token
-    
-    # Get query impacts if they exist in token_impact
-    query_impacts = {h: v for h, v in token_impact.items() if h in query_hash_to_token}
-    
-    # Create highlighted HTML for query
-    for token_hash, token in query_hash_to_token.items():
-        if token_hash in query_impacts:
+    for token in query_sentences:
+        token_hash = "query_" + hashlib.md5(token.encode()).hexdigest()
+        if token_hash in query_impacts.keys():
             impact_value = query_impacts[token_hash]
             color = get_color_for_value(impact_value, thresholds["query"])
             percentage = calculate_percentage(impact_value, query_impacts)
+            
+            # Create span with tooltip showing impact percentage
             span = f'<span style="background-color: {color};" title="Impact: {percentage:.2f}%">{token}</span>'
-            query_html.append(span)
+            query_html.append(span) 
         else:
+            # If token not found in query impacts, add it without highlighting
             query_html.append(token)
+    
+   
     
     # Format permutation impact information if available
     permutation_html = ""
@@ -285,7 +283,7 @@ def visualize_results_html(analysis_results):
     
     query_legend = "<h4>Query Impact Legend</h4><ul>"
     for threshold, color in sorted(thresholds["query"], key=lambda x: x[0]):
-        query_legend += f'<li><span style="display:inline-block; width:20px; height:20px; background-color:{color};"></span> > {float(threshold):.8f}</li>'
+        query_legend += f'<li><span style="display:inline-block; width:20px; height:20px; background-color:{color};"></span> > {float(calculate_percentage(threshold, query_impacts)):.4f}</li>'
     query_legend += "</ul>"
     
     # Build the complete HTML

@@ -10,7 +10,8 @@ import warnings # To suppress warnings
 # Choose your embedding provider and model here
 EMBEDDING_CONFIG = {
     # Options: "spacy", "sentence-transformers", "huggingface", "openai"
-    "provider": "huggingface",#"sentence-transformers",
+    "provider": "huggingface",
+    #"provider": "sentence-transformers",
 
     # --- Provider Specific Settings ---
     # spacy: Model name (e.g., "en_core_web_sm", "en_core_web_md", "en_core_web_lg")
@@ -200,7 +201,7 @@ THRESHOLD_CONFIG = {
     "context": {
         "method": "gaussian_average",  # Options: "gaussian_average", "custom", None
         "custom_value": 0.1,           # Value to use if method is "custom"
-        "levels": [ 0.0,0.5, 0.75],     # Standard deviations above the mean for levels
+        "levels": [ 0.0,0.5, 0.75, 0.9],     # Standard deviations above the mean for levels
         "colors": ['lightcoral', 'salmon', 'red', "yellow"] # Corresponding colors for levels
     },
     "query": {

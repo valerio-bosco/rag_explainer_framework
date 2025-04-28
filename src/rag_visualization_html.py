@@ -223,25 +223,26 @@ def visualize_results_html(analysis_results):
         if max_value == 0:
             return 0
         return (float(value)-min_value) / (max_value- min_value) * 100
-    
-    # Process context
-    context_sentences = tokenize_and_filter(context)
     context_html = []
-    
-    for sentence in context_sentences:
-        token_hash = "context_"+hashlib.md5(sentence.encode()).hexdigest()
-        if token_hash in context_impacts.keys():
+    # Process context
+    for chunk in context:
+        context_sentences = tokenize_and_filter(chunk)
+        context_html.append("<h2>CHUNK</h2>")
+        for sentence in context_sentences:
             
-            impact_value = context_impacts[token_hash]
-            color = get_color_for_value(impact_value, thresholds["context"])
-            percentage = calculate_percentage(impact_value, context_impacts)
-            
-            # Create span with tooltip showing impact percentage
-            span = f'<span style="background-color: {color};" title="Impact: {percentage:.2f}%">{sentence}</span>'
-            context_html.append(span)
-        else:
-            # If token not found in context impacts, add it without highlighting
-            context_html.append(sentence)
+            token_hash = "context_"+hashlib.md5(sentence.encode()).hexdigest()
+            if token_hash in context_impacts.keys():
+                
+                impact_value = context_impacts[token_hash]
+                color = get_color_for_value(impact_value, thresholds["context"])
+                percentage = calculate_percentage(impact_value, context_impacts)
+                
+                # Create span with tooltip showing impact percentage
+                span = f'<span style="background-color: {color};" title="Impact: {percentage:.2f}%">{sentence}</span>'
+                context_html.append(span)
+            else:
+                # If token not found in context impacts, add it without highlighting
+                context_html.append(sentence)
 
     
     # Process query highlighting if query impacts exist

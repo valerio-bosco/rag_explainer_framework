@@ -6,6 +6,8 @@ import itertools
 import embedding_service as es
 import hashlib
 
+from rag_thread import RagThread
+
 # def tokenize_and_filter(text):
     # """Tokenizes text and filters out stop words and punctuation."""
     # tokenizer_nlp = es.get_tokenizer_nlp()
@@ -338,9 +340,19 @@ def analyze_rag(context, query, response, analyze_permutations=True, num_permuta
             "embedding_config": es.EMBEDDING_CONFIG
         }
 
-
-    # Analyze token impact
-    token_impact = explain_by_token_removal(context, query, response)
+    token_impact = defaultdict(float)
+    #multi-threading for each chunk of context which is an array of chunks
+    threads = []
+    for i, chunk in enumerate(context):
+        print(f"Processing chunk {i+1}/{len(context)}: {chunk[:50]}...")
+        thread = RagThread(target=explain_by_token_removal, args=(chunk, query, response))
+        thread.start()
+        threads.append(thread)
+        
+    for i in range(len(context)):
+        test = threads[i].join()
+        token_impact.update(test)
+        
 
     # Analyze permutations if requested
     permutation_impact = {}

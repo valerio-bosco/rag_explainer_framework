@@ -6,31 +6,539 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>RAG Analysis Visualization</title>
         <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .container { max-width: 1200px; margin: 0 auto; }
-            .context-section, .query-section , .response-section{ 
-                margin-bottom: 20px; 
-                padding: 20px; 
-                border-radius: 5px;
-                border: 1px solid #ddd;
+            :root {
+                --color-primary: #3a86ff;
+                --color-primary-light: #60a5fa;
+                --color-primary-dark: #1e40af;
+                --color-secondary: #4b5563;
+                --color-accent: #8b5cf6;
+                --color-success: #10b981;
+                --color-warning: #f59e0b;
+                --color-error: #ef4444;
+                --color-text: #1f2937;
+                --color-text-light: #6b7280;
+                --color-text-lightest: #9ca3af;
+                --color-background: #f9fafb;
+                --color-card: #ffffff;
+                --color-border: #e5e7eb;
+                --color-highlight: #fef3c7;
+                --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+                --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+                --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                --rounded-sm: 4px;
+                --rounded: 8px;
+                --rounded-md: 12px;
+                --rounded-lg: 16px;
+                --transition: all 0.3s ease;
+                --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                --font-mono: 'Roboto Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
             }
-            h2 { color: #333; }
-            span { padding: 2px 0; }
-            .legend-container { 
-                display: flex; 
+            
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            
+            body {
+                font-family: var(--font-sans);
+                font-size: 16px;
+                line-height: 1.5;
+                color: var(--color-text);
+                background-color: var(--color-background);
+                padding: 2rem;
+            }
+            
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            
+            /* Typography */
+            h1, h2, h3, h4, h5, h6 {
+                margin: 0;
+                line-height: 1.2;
+                font-weight: 600;
+                color: var(--color-text);
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 2rem;
+                color: var(--color-primary-dark);
+                position: relative;
+                display: inline-block;
+            }
+            
+            h1::after {
+                content: '';
+                position: absolute;
+                bottom: -10px;
+                left: 0;
+                width: 60px;
+                height: 4px;
+                background-color: var(--color-primary);
+                border-radius: 2px;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+                color: var(--color-primary-dark);
+            }
+            
+            h3 {
+                font-size: 1.25rem;
+                margin-bottom: 1rem;
+                color: var(--color-primary);
+            }
+            
+            h4 {
+                font-size: 1rem;
+                color: var(--color-secondary);
+                margin-bottom: 0.5rem;
+            }
+            
+            p {
+                margin-bottom: 1rem;
+            }
+            
+            /* Card Layouts */
+            .section-card {
+                background-color: var(--color-card);
+                border-radius: var(--rounded-md);
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                box-shadow: var(--shadow);
+                border: 1px solid var(--color-border);
+                transition: var(--transition);
+            }
+            
+            .section-card:hover {
+                box-shadow: var(--shadow-md);
+            }
+            
+            /* Legend */
+            .legend-container {
+                display: flex;
                 justify-content: space-between;
+                gap: 1.5rem;
+                margin-bottom: 2rem;
                 flex-wrap: wrap;
             }
-            .legend { 
-                margin-right: 20px; 
-                padding: 10px; 
-                border: 1px solid #ddd; 
-                border-radius: 5px; 
-                margin-bottom: 20px;
+            
+            .legend {
+                flex: 1;
+                min-width: 200px;
+                background-color: var(--color-card);
+                padding: 1.25rem;
+                border-radius: var(--rounded);
+                box-shadow: var(--shadow);
+                border: 1px solid var(--color-border);
             }
-            ul { list-style-type: none; padding-left: 10px; }
-            li { margin-bottom: 5px; }
+            
+            .legend-header {
+                font-weight: 600;
+                margin-bottom: 1rem;
+                color: var(--color-primary-dark);
+                font-size: 1rem;
+            }
+            
+            .color-scale {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .color-stop {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            
+            .color-sample {
+                width: 20px;
+                height: 20px;
+                border-radius: var(--rounded-sm);
+                border: 1px solid rgba(0,0,0,0.1);
+            }
+            
+            .threshold-value {
+                font-size: 0.875rem;
+                color: var(--color-text-light);
+            }
+            
+            /* Query Section */
+            .query-section {
+                background-color: var(--color-card);
+                border-radius: var(--rounded-md);
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                box-shadow: var(--shadow);
+                border: 1px solid var(--color-border);
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .query-section::before {
+                content: 'Query';
+                position: absolute;
+                top: 0;
+                right: 0;
+                background-color: var(--color-primary);
+                color: white;
+                font-size: 0.75rem;
+                font-weight: 600;
+                padding: 0.25rem 0.75rem;
+                border-bottom-left-radius: var(--rounded-sm);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+            
+            /* Context Section */
+            .context-section {
+                background-color: var(--color-card);
+                border-radius: var(--rounded-md);
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                box-shadow: var(--shadow);
+                border: 1px solid var(--color-border);
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .context-section::before {
+                content: 'Context';
+                position: absolute;
+                top: 0;
+                right: 0;
+                background-color: var(--color-secondary);
+                color: white;
+                font-size: 0.75rem;
+                font-weight: 600;
+                padding: 0.25rem 0.75rem;
+                border-bottom-left-radius: var(--rounded-sm);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+            
+            .chunk-header {
+                font-weight: 600;
+                margin-top: 1.25rem;
+                margin-bottom: 0.5rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid var(--color-border);
+                color: var(--color-secondary);
+                font-size: 0.9rem;
+            }
+            
+            .chunk-content {
+                line-height: 1.6;
+                margin-bottom: 1rem;
+            }
+            
+            .highlight {
+                border-radius: 3px;
+                transition: all 0.2s ease;
+                cursor: pointer;
+                padding: 2px 0;
+                position: relative;
+            }
+            
+            .highlight:hover {
+                opacity: 0.8 !important;
+            }
+            
+            .tooltip {
+                position: absolute;
+                background-color: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                pointer-events: none;
+                z-index: 100;
+                white-space: nowrap;
+            }
+            
+            /* Response Section */
+            .response-section {
+                background-color: var(--color-card);
+                border-radius: var(--rounded-md);
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                box-shadow: var(--shadow);
+                border: 1px solid var(--color-border);
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .response-section::before {
+                content: 'Response';
+                position: absolute;
+                top: 0;
+                right: 0;
+                background-color: var(--color-accent);
+                color: white;
+                font-size: 0.75rem;
+                font-weight: 600;
+                padding: 0.25rem 0.75rem;
+                border-bottom-left-radius: var(--rounded-sm);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+            
+            /* Response Analysis */
+            .response-analysis {
+                background-color: var(--color-card);
+                border-radius: var(--rounded-md);
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                box-shadow: var(--shadow);
+                border: 1px solid var(--color-border);
+            }
+            
+            .sentence-cards {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+                gap: 1.5rem;
+                margin-top: 1.5rem;
+            }
+            
+            .sentence-card {
+                background-color: white;
+                border-radius: var(--rounded);
+                box-shadow: var(--shadow);
+                overflow: hidden;
+                border: 1px solid var(--color-border);
+                transition: var(--transition);
+                cursor: pointer;
+            }
+            
+            .sentence-card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-md);
+            }
+            
+            .response-sentence {
+                padding: 1.25rem;
+                background-color: #f0f7ff;
+                border-left: 4px solid var(--color-primary);
+                font-size: 1rem;
+                font-weight: 500;
+                color: var(--color-text);
+                position: relative;
+                display: flex;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .quote-icon {
+                fill: var(--color-primary);
+                flex-shrink: 0;
+                margin-top: 3px;
+            }
+            
+            .similar-contexts {
+                padding: 1.25rem;
+            }
+            
+            .similar-contexts h4 {
+                margin-top: 0;
+                margin-bottom: 1rem;
+                font-size: 0.9rem;
+                color: var(--color-text-light);
+                font-weight: 500;
+            }
+            
+            .similar-contexts ul {
+                list-style-type: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .similar-contexts li {
+                padding: 0.75rem 0;
+                border-bottom: 1px solid var(--color-border);
+            }
+            
+            .similar-contexts li.primary {
+                background-color: #fcfcfc;
+            }
+            
+            .similar-contexts li:last-child {
+                border-bottom: none;
+            }
+            
+            .context-sentence {
+                margin-bottom: 0.5rem;
+                font-size: 0.9rem;
+                color: var(--color-text);
+                display: flex;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .link-icon {
+                fill: var(--color-text-lightest);
+                flex-shrink: 0;
+                margin-top: 3px;
+            }
+            
+            .similarity-container {
+                display: flex;
+                align-items: center;
+                margin-top: 0.5rem;
+                gap: 1rem;
+            }
+            
+            .similarity-score {
+                font-size: 0.8rem;
+                color: var(--color-text-light);
+                white-space: nowrap;
+            }
+            
+            .similarity-score strong {
+                color: var(--color-text);
+            }
+            
+            .similarity-bar-container {
+                flex-grow: 1;
+                height: 6px;
+                background-color: #eee;
+                border-radius: 3px;
+                overflow: hidden;
+            }
+            
+            .similarity-bar {
+                height: 100%;
+                border-radius: 3px;
+                transition: width 0.3s ease;
+            }
+            
+            /* Permutation Section */
+            .permutation-section {
+                background-color: var(--color-card);
+                border-radius: var(--rounded-md);
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                box-shadow: var(--shadow);
+                border: 1px solid var(--color-border);
+            }
+            
+            .permutation-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .permutation-table th,
+            .permutation-table td {
+                padding: 0.75rem 1rem;
+                text-align: left;
+                border-bottom: 1px solid var(--color-border);
+            }
+            
+            .permutation-table th {
+                font-weight: 600;
+                color: var(--color-text);
+                background-color: #f9fafb;
+            }
+            
+            .permutation-table tbody tr:hover {
+                background-color: #f9fafb;
+            }
+            
+            .permutation-table .original-row {
+                background-color: #f0f7ff;
+            }
+            
+            .permutation-bar-container {
+                width: 100%;
+                height: 8px;
+                background-color: #eee;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            
+            .permutation-bar {
+                height: 100%;
+                border-radius: 4px;
+                transition: width 0.3s ease;
+            }
+            
+            .permutation-bar.baseline {
+                background-color: var(--color-primary);
+            }
+            
+            .trend-icon {
+                vertical-align: middle;
+                margin-right: 4px;
+                fill: currentColor;
+            }
+            
+            .negative {
+                color: var(--color-error);
+            }
+            
+            /* Responsive Adjustments */
+            @media (max-width: 768px) {
+                body {
+                    padding: 1rem;
+                }
+                
+                .sentence-cards {
+                    grid-template-columns: 1fr;
+                }
+            }
         </style>
+        
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add hover tooltips to highlighted spans
+        const highlights = document.querySelectorAll('.highlight');
+        highlights.forEach(span => {
+            span.addEventListener('mouseenter', function(e) {
+                const impact = this.getAttribute('data-impact');
+                
+                // Create tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = `Impact: ${impact}`;
+                
+                // Position tooltip
+                const rect = this.getBoundingClientRect();
+                tooltip.style.left = `${rect.left + window.scrollX}px`;
+                tooltip.style.top = `${rect.top + window.scrollY - 30}px`;
+                
+                // Add to DOM
+                document.body.appendChild(tooltip);
+                
+                // Store reference
+                this.tooltip = tooltip;
+            });
+            
+            span.addEventListener('mouseleave', function() {
+                if (this.tooltip) {
+                    this.tooltip.remove();
+                    this.tooltip = null;
+                }
+            });
+        });
+        
+        // Add toggle functionality for sentence cards
+        const sentenceCards = document.querySelectorAll('.sentence-card');
+        sentenceCards.forEach(card => {
+            card.addEventListener('click', function() {
+                this.classList.toggle('expanded');
+            });
+        });
+    });
+    </script>
+    
     </head>
     <body>
         <div class="container">
@@ -38,27 +546,1199 @@
             
             <div class="legend-container">
                 <div class="legend">
-                    <h4>Context Impact Legend</h4><ul><li><span style="display:inline-block; width:20px; height:20px; background-color:lightcoral;"></span> > 59.0923</li><li><span style="display:inline-block; width:20px; height:20px; background-color:salmon;"></span> > 79.5461</li><li><span style="display:inline-block; width:20px; height:20px; background-color:red;"></span> > 89.7731</li><li><span style="display:inline-block; width:20px; height:20px; background-color:yellow;"></span> > 95.9092</li></ul>
+                    
+    <div class="legend-header">Context Impact</div>
+    <div class="color-scale">
+    
+        <div class="color-stop">
+            <div class="color-sample" style="background-color: yellow"></div>
+            <div class="threshold-value">95.9%+</div>
+        </div>
+        
+        <div class="color-stop">
+            <div class="color-sample" style="background-color: red"></div>
+            <div class="threshold-value">89.8%+</div>
+        </div>
+        
+        <div class="color-stop">
+            <div class="color-sample" style="background-color: salmon"></div>
+            <div class="threshold-value">79.5%+</div>
+        </div>
+        
+        <div class="color-stop">
+            <div class="color-sample" style="background-color: lightcoral"></div>
+            <div class="threshold-value">59.1%+</div>
+        </div>
+        
+    </div>
+    
                 </div>
                 <div class="legend">
-                    <h4>Query Impact Legend</h4><ul><li><span style="display:inline-block; width:20px; height:20px; background-color:lightblue;"></span> > 50.0000</li><li><span style="display:inline-block; width:20px; height:20px; background-color:cornflowerblue;"></span> > 75.0000</li><li><span style="display:inline-block; width:20px; height:20px; background-color:blue;"></span> > 87.5000</li></ul>
+                    
+    <div class="legend-header">Query Impact</div>
+    <div class="color-scale">
+    
+        <div class="color-stop">
+            <div class="color-sample" style="background-color: blue"></div>
+            <div class="threshold-value">87.5%+</div>
+        </div>
+        
+        <div class="color-stop">
+            <div class="color-sample" style="background-color: cornflowerblue"></div>
+            <div class="threshold-value">75.0%+</div>
+        </div>
+        
+        <div class="color-stop">
+            <div class="color-sample" style="background-color: lightblue"></div>
+            <div class="threshold-value">50.0%+</div>
+        </div>
+        
+    </div>
+    
                 </div>
             </div>
             
             <div class="query-section">
                 <h2>Query</h2>
-                <p><span style="background-color: blue;" title="Impact: 100.00%">Explain how modern desalination technologies work, what their main environmental impacts are, and how renewable energy can help address these issues.</span><span style="background-color: inherit;" title="Impact: 0.00%">Also, discuss whether desalination alone is a viable long-term solution to global water scarcity.</span></p>
+                <p><span class="highlight" style="background-color: blue; opacity: 0.9;" data-impact="100.00%">Explain how modern desalination technologies work, what their main environmental impacts are, and how renewable energy can help address these issues.</span><span class="highlight" style="background-color: transparent; opacity: 0.15;" data-impact="0.00%">Also, discuss whether desalination alone is a viable long-term solution to global water scarcity.</span></p>
             </div>
             
             <div class="context-section">
                 <h2>Context</h2>
-                <p><h2>CHUNK</h2><span style="background-color: lightcoral;" title="Impact: 74.65%">The process of desalination involves removing salt and other minerals from seawater to make it suitable for human consumption or irrigation.</span><span style="background-color: inherit;" title="Impact: 47.18%">The two main methods are thermal distillation and membrane processes such as reverse osmosis.</span><span style="background-color: inherit;" title="Impact: 40.96%">Thermal distillation mimics the natural water cycle by heating water until it evaporates, then condensing it back into liquid form.</span><span style="background-color: inherit;" title="Impact: 40.80%">Reverse osmosis, on the other hand, forces water through a semipermeable membrane that blocks salt and other impurities.</span><span style="background-color: red;" title="Impact: 91.86%">Each method has its own set of advantages and limitations in terms of energy consumption, cost, and environmental impact.</span><h2>CHUNK</h2><span style="background-color: lightcoral;" title="Impact: 76.94%">Desalination plants are critical in arid regions where freshwater resources are limited.</span><span style="background-color: inherit;" title="Impact: 24.89%">However, they are energy-intensive, often relying on fossil fuels, which raises concerns about their carbon footprint.</span><span style="background-color: inherit;" title="Impact: 27.18%">Some newer facilities are integrating renewable energy sources like solar or wind to power their operations.</span><span style="background-color: salmon;" title="Impact: 81.52%">Another major issue is brine disposal: the concentrated saltwater byproduct must be managed carefully to avoid damaging marine ecosystems.</span><span style="background-color: salmon;" title="Impact: 84.93%">Researchers are exploring ways to minimize environmental harm, including diluting brine before discharge or extracting valuable minerals from it.</span><h2>CHUNK</h2><span style="background-color: red;" title="Impact: 92.05%">Renewable energy integration with desalination can significantly reduce greenhouse gas emissions.</span><span style="background-color: inherit;" title="Impact: 43.15%">Solar-powered reverse osmosis is one promising technology, but its widespread adoption faces challenges like intermittency of sunlight and high upfront costs.</span><span style="background-color: inherit;" title="Impact: 58.41%">Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available.</span><span style="background-color: inherit;" title="Impact: 42.76%">Some pilot plants have demonstrated that combining concentrated solar power (CSP) with desalination can be economically viable under specific conditions.</span><h2>CHUNK</h2><span style="background-color: inherit;" title="Impact: 52.28%">The future of desalination technology is likely to focus on improving energy efficiency and reducing costs.</span><span style="background-color: inherit;" title="Impact: 44.67%">Innovations in membrane materials and designs are expected to enhance the performance of reverse osmosis systems.</span><span style="background-color: inherit;" title="Impact: 52.59%">Additionally, hybrid systems that combine multiple desalination methods may offer better overall efficiency.</span><span style="background-color: inherit;" title="Impact: 55.91%">Research into alternative desalination techniques, such as forward osmosis or solar stills, is also ongoing.</span><span style="background-color: red;" title="Impact: 90.02%">Policymakers and researchers are working together to create frameworks that encourage sustainable practices in desalination, balancing the need for freshwater with environmental considerations.</span><h2>CHUNK</h2><span style="background-color: lightcoral;" title="Impact: 74.87%">Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.</span><span style="background-color: yellow;" title="Impact: 99.65%">While desalination can help meet demand, it is not a silver bullet.</span><span style="background-color: lightcoral;" title="Impact: 61.85%">Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.</span><span style="background-color: inherit;" title="Impact: 0.00%">Moreover, community involvement and equitable access are critical to ensure that new technologies benefit all socioeconomic groups, not just wealthier populations.</span></p>
+                <p><div class='chunk-header'>Chunk 1</div><div class='chunk-content'><span class="highlight" style="background-color: lightcoral; opacity: 0.7465044813833427;" data-impact="74.65%">The process of desalination involves removing salt and other minerals from seawater to make it suitable for human consumption or irrigation.</span><span class="highlight" style="background-color: transparent; opacity: 0.4718484725061644;" data-impact="47.18%">The two main methods are thermal distillation and membrane processes such as reverse osmosis.</span><span class="highlight" style="background-color: transparent; opacity: 0.40964830198969027;" data-impact="40.96%">Thermal distillation mimics the natural water cycle by heating water until it evaporates, then condensing it back into liquid form.</span><span class="highlight" style="background-color: transparent; opacity: 0.40797288337133436;" data-impact="40.80%">Reverse osmosis, on the other hand, forces water through a semipermeable membrane that blocks salt and other impurities.</span><span class="highlight" style="background-color: red; opacity: 0.9;" data-impact="91.86%">Each method has its own set of advantages and limitations in terms of energy consumption, cost, and environmental impact.</span></div><div class='chunk-header'>Chunk 2</div><div class='chunk-content'><span class="highlight" style="background-color: lightcoral; opacity: 0.7694153682894485;" data-impact="76.94%">Desalination plants are critical in arid regions where freshwater resources are limited.</span><span class="highlight" style="background-color: transparent; opacity: 0.24891562961211589;" data-impact="24.89%">However, they are energy-intensive, often relying on fossil fuels, which raises concerns about their carbon footprint.</span><span class="highlight" style="background-color: transparent; opacity: 0.2717798871122545;" data-impact="27.18%">Some newer facilities are integrating renewable energy sources like solar or wind to power their operations.</span><span class="highlight" style="background-color: salmon; opacity: 0.8151757078492313;" data-impact="81.52%">Another major issue is brine disposal: the concentrated saltwater byproduct must be managed carefully to avoid damaging marine ecosystems.</span><span class="highlight" style="background-color: salmon; opacity: 0.8493315733886697;" data-impact="84.93%">Researchers are exploring ways to minimize environmental harm, including diluting brine before discharge or extracting valuable minerals from it.</span></div><div class='chunk-header'>Chunk 3</div><div class='chunk-content'><span class="highlight" style="background-color: red; opacity: 0.9;" data-impact="92.05%">Renewable energy integration with desalination can significantly reduce greenhouse gas emissions.</span><span class="highlight" style="background-color: transparent; opacity: 0.4315014759937498;" data-impact="43.15%">Solar-powered reverse osmosis is one promising technology, but its widespread adoption faces challenges like intermittency of sunlight and high upfront costs.</span><span class="highlight" style="background-color: transparent; opacity: 0.5841429303054265;" data-impact="58.41%">Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available.</span><span class="highlight" style="background-color: transparent; opacity: 0.42758217582805885;" data-impact="42.76%">Some pilot plants have demonstrated that combining concentrated solar power (CSP) with desalination can be economically viable under specific conditions.</span></div><div class='chunk-header'>Chunk 4</div><div class='chunk-content'><span class="highlight" style="background-color: transparent; opacity: 0.5227863378495702;" data-impact="52.28%">The future of desalination technology is likely to focus on improving energy efficiency and reducing costs.</span><span class="highlight" style="background-color: transparent; opacity: 0.4466828724470994;" data-impact="44.67%">Innovations in membrane materials and designs are expected to enhance the performance of reverse osmosis systems.</span><span class="highlight" style="background-color: transparent; opacity: 0.5259059668674375;" data-impact="52.59%">Additionally, hybrid systems that combine multiple desalination methods may offer better overall efficiency.</span><span class="highlight" style="background-color: transparent; opacity: 0.5590716462344151;" data-impact="55.91%">Research into alternative desalination techniques, such as forward osmosis or solar stills, is also ongoing.</span><span class="highlight" style="background-color: red; opacity: 0.9;" data-impact="90.02%">Policymakers and researchers are working together to create frameworks that encourage sustainable practices in desalination, balancing the need for freshwater with environmental considerations.</span></div><div class='chunk-header'>Chunk 5</div><div class='chunk-content'><span class="highlight" style="background-color: lightcoral; opacity: 0.7487124483761192;" data-impact="74.87%">Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.</span><span class="highlight" style="background-color: yellow; opacity: 0.9;" data-impact="99.65%">While desalination can help meet demand, it is not a silver bullet.</span><span class="highlight" style="background-color: lightcoral; opacity: 0.6184602960866397;" data-impact="61.85%">Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.</span><span class="highlight" style="background-color: transparent; opacity: 0.15;" data-impact="0.00%">Moreover, community involvement and equitable access are critical to ensure that new technologies benefit all socioeconomic groups, not just wealthier populations.</span></div></p>
             </div>
-             <div class="response-section">
+            
+            <div class="response-section">
                 <h2>Response</h2>
                 <p>Modern desalination technologies aim to remove salts and other impurities from seawater to make it suitable for human use. The two primary methods are thermal distillation and reverse osmosis. In thermal distillation, water is heated to create vapor, which is then condensed back into liquid form, mimicking the natural water cycle. In reverse osmosis, water is forced through a semipermeable membrane that blocks salts and other contaminants. Each technique has trade-offs in terms of energy consumption, cost, and environmental effects. Desalination plants, while essential in water-scarce regions, have significant environmental impacts. They are highly energy-intensive, often depending on fossil fuels, which contributes to carbon emissions. Additionally, the brine produced as a byproduct poses a risk to marine ecosystems if not properly managed. Some facilities have adopted strategies like brine dilution or mineral extraction to mitigate these effects. Integrating renewable energy sources like solar or wind into desalination processes offers a promising path forward. Solar-powered reverse osmosis and hybrid systems that combine concentrated solar power with desalination can lower greenhouse gas emissions. However, challenges such as the intermittency of renewable sources and the high initial investment must be addressed, potentially through energy storage technologies. Despite these innovations, desalination alone is unlikely to fully solve global water scarcity. Complementary strategies such as wastewater recycling, rainwater harvesting, and better water management are necessary. Moreover, ensuring equitable access and community engagement is crucial to make desalination solutions both sustainable and inclusive.</p>
-            </div>    
-            ['<h2>Modern desalination technologies aim to remove salts and other impurities from seawater to make it suitable for human use.</h2>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.23326921463012695</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.26026082038879395</span></br>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.2747035026550293</span></br>', '<h2>The two primary methods are thermal distillation and reverse osmosis.</h2>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.2802152633666992</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.38648736476898193</span></br>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.4372987747192383</span></br>', '<h2>In thermal distillation, water is heated to create vapor, which is then condensed back into liquid form, mimicking the natural water cycle.</h2>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.25425004959106445</span></br>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.391596257686615</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.39489108324050903</span></br>', '<h2>In reverse osmosis, water is forced through a semipermeable membrane that blocks salts and other contaminants.</h2>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.28966593742370605</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.4002646207809448</span></br>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.4042544364929199</span></br>', '<h2>Each technique has trade-offs in terms of energy consumption, cost, and environmental effects.</h2>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.2822151184082031</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.28373289108276367</span></br>', '<span>Moreover, community involvement and equitable access are critical to ensure that new technologies benefit all socioeconomic groups, not just wealthier populations.: 0.29759037494659424</span></br>', '<h2>Desalination plants, while essential in water-scarce regions, have significant environmental impacts.</h2>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.19532477855682373</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.20847868919372559</span></br>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.24918878078460693</span></br>', '<h2>They are highly energy-intensive, often depending on fossil fuels, which contributes to carbon emissions.</h2>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.2383636236190796</span></br>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.28295397758483887</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.31505870819091797</span></br>', '<h2>Additionally, the brine produced as a byproduct poses a risk to marine ecosystems if not properly managed.</h2>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.2389126420021057</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.24451088905334473</span></br>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.29858607053756714</span></br>', '<h2>Some facilities have adopted strategies like brine dilution or mineral extraction to mitigate these effects.</h2>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.20935815572738647</span></br>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.26190662384033203</span></br>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.2869068384170532</span></br>', '<h2>Integrating renewable energy sources like solar or wind into desalination processes offers a promising path forward.</h2>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.21495938301086426</span></br>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.2180911898612976</span></br>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.2647605538368225</span></br>', '<h2>Solar-powered reverse osmosis and hybrid systems that combine concentrated solar power with desalination can lower greenhouse gas emissions.</h2>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.20494472980499268</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.25849080085754395</span></br>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.26727157831192017</span></br>', '<h2>However, challenges such as the intermittency of renewable sources and the high initial investment must be addressed, potentially through energy storage technologies.</h2>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.14437252283096313</span></br>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.1960686445236206</span></br>', '<span>Moreover, community involvement and equitable access are critical to ensure that new technologies benefit all socioeconomic groups, not just wealthier populations.: 0.201981782913208</span></br>', '<h2>Despite these innovations, desalination alone is unlikely to fully solve global water scarcity.</h2>', '<span>Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.: 0.13105857372283936</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.20070111751556396</span></br>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.20636427402496338</span></br>', '<h2>Complementary strategies such as wastewater recycling, rainwater harvesting, and better water management are necessary.</h2>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.04705524444580078</span></br>', '<span>Moreover, community involvement and equitable access are critical to ensure that new technologies benefit all socioeconomic groups, not just wealthier populations.: 0.24260210990905762</span></br>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.285463809967041</span></br>', '<h2>Moreover, ensuring equitable access and community engagement is crucial to make desalination solutions both sustainable and inclusive.</h2>', '<span>Moreover, community involvement and equitable access are critical to ensure that new technologies benefit all socioeconomic groups, not just wealthier populations.: 0.13103652000427246</span></br>', '<span>Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.: 0.17296171188354492</span></br>', '<span>While desalination can help meet demand, it is not a silver bullet.: 0.3031822443008423</span></br>']
+            </div>
+            
+            <div class='response-analysis'><h3>Response Sentence Analysis</h3><div class='sentence-cards'>
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Modern desalination technologies aim to remove salts and other impurities from seawater to make it suitable for human use.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The process of desalination involves removing salt and other minerals from seawater to make it suitable for human consumption or irrigation.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.058</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 5.778980255126953%; background-color: hsl(6.934776306152344, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Researchers are exploring ways to minimize environmental harm, including diluting brine before discharge or extracting valuable minerals from it.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.130</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 13.024389743804932%; background-color: hsl(15.629267692565918, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Thermal distillation mimics the natural water cycle by heating water until it evaporates, then condensing it back into liquid form.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.187</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 18.705928325653076%; background-color: hsl(22.44711399078369, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.200</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 19.986450672149658%; background-color: hsl(23.98374080657959, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>The two primary methods are thermal distillation and reverse osmosis.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The two main methods are thermal distillation and membrane processes such as reverse osmosis.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.053</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 5.311882495880127%; background-color: hsl(6.374258995056152, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Research into alternative desalination techniques, such as forward osmosis or solar stills, is also ongoing.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.190</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 18.98486018180847%; background-color: hsl(22.781832218170166, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Thermal distillation mimics the natural water cycle by heating water until it evaporates, then condensing it back into liquid form.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.197</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 19.65489387512207%; background-color: hsl(23.585872650146484, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Additionally, hybrid systems that combine multiple desalination methods may offer better overall efficiency.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.228</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 22.79576063156128%; background-color: hsl(27.354912757873535, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>In thermal distillation, water is heated to create vapor, which is then condensed back into liquid form, mimicking the natural water cycle.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Thermal distillation mimics the natural water cycle by heating water until it evaporates, then condensing it back into liquid form.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.038</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 3.8084805011749268%; background-color: hsl(4.570176601409912, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The process of desalination involves removing salt and other minerals from seawater to make it suitable for human consumption or irrigation.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.188</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 18.807756900787354%; background-color: hsl(22.569308280944824, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The two main methods are thermal distillation and membrane processes such as reverse osmosis.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.197</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 19.66339349746704%; background-color: hsl(23.59607219696045, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Reverse osmosis, on the other hand, forces water through a semipermeable membrane that blocks salt and other impurities.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.214</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 21.377122402191162%; background-color: hsl(25.652546882629395, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>In reverse osmosis, water is forced through a semipermeable membrane that blocks salts and other contaminants.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Reverse osmosis, on the other hand, forces water through a semipermeable membrane that blocks salt and other impurities.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.051</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 5.13530969619751%; background-color: hsl(6.162371635437012, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The process of desalination involves removing salt and other minerals from seawater to make it suitable for human consumption or irrigation.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.184</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 18.402409553527832%; background-color: hsl(22.0828914642334, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The two main methods are thermal distillation and membrane processes such as reverse osmosis.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.195</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 19.523590803146362%; background-color: hsl(23.428308963775635, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Thermal distillation mimics the natural water cycle by heating water until it evaporates, then condensing it back into liquid form.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.198</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 19.787532091140747%; background-color: hsl(23.745038509368896, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Each technique has trade-offs in terms of energy consumption, cost, and environmental effects.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Each method has its own set of advantages and limitations in terms of energy consumption, cost, and environmental impact.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.075</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 7.510107755661011%; background-color: hsl(9.012129306793213, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Solar-powered reverse osmosis is one promising technology, but its widespread adoption faces challenges like intermittency of sunlight and high upfront costs.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.215</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 21.528100967407227%; background-color: hsl(25.833721160888672, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Additionally, hybrid systems that combine multiple desalination methods may offer better overall efficiency.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.220</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 22.044825553894043%; background-color: hsl(26.45379066467285, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Some pilot plants have demonstrated that combining concentrated solar power (CSP) with desalination can be economically viable under specific conditions.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.237</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 23.72819185256958%; background-color: hsl(28.473830223083496, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Desalination plants, while essential in water-scarce regions, have significant environmental impacts.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Desalination plants are critical in arid regions where freshwater resources are limited.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.082</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 8.152854442596436%; background-color: hsl(9.783425331115723, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Renewable energy integration with desalination can significantly reduce greenhouse gas emissions.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.170</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 16.953182220458984%; background-color: hsl(20.34381866455078, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Another major issue is brine disposal: the concentrated saltwater byproduct must be managed carefully to avoid damaging marine ecosystems.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.170</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 16.99407696723938%; background-color: hsl(20.392892360687256, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            However, they are energy-intensive, often relying on fossil fuels, which raises concerns about their carbon footprint.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.189</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 18.90426278114319%; background-color: hsl(22.685115337371826, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>They are highly energy-intensive, often depending on fossil fuels, which contributes to carbon emissions.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            However, they are energy-intensive, often relying on fossil fuels, which raises concerns about their carbon footprint.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.061</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 6.115686893463135%; background-color: hsl(7.338824272155762, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.177</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 17.704856395721436%; background-color: hsl(21.245827674865723, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Renewable energy integration with desalination can significantly reduce greenhouse gas emissions.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.185</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 18.457186222076416%; background-color: hsl(22.1486234664917, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Some newer facilities are integrating renewable energy sources like solar or wind to power their operations.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.213</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 21.28225564956665%; background-color: hsl(25.53870677947998, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Additionally, the brine produced as a byproduct poses a risk to marine ecosystems if not properly managed.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Another major issue is brine disposal: the concentrated saltwater byproduct must be managed carefully to avoid damaging marine ecosystems.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.076</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 7.645457983016968%; background-color: hsl(9.174549579620361, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Researchers are exploring ways to minimize environmental harm, including diluting brine before discharge or extracting valuable minerals from it.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.159</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 15.857815742492676%; background-color: hsl(19.02937889099121, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The process of desalination involves removing salt and other minerals from seawater to make it suitable for human consumption or irrigation.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.177</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 17.727434635162354%; background-color: hsl(21.272921562194824, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.239</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 23.891258239746094%; background-color: hsl(28.669509887695312, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Some facilities have adopted strategies like brine dilution or mineral extraction to mitigate these effects.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Researchers are exploring ways to minimize environmental harm, including diluting brine before discharge or extracting valuable minerals from it.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.093</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 9.333068132400513%; background-color: hsl(11.199681758880615, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The process of desalination involves removing salt and other minerals from seawater to make it suitable for human consumption or irrigation.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.177</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 17.68975257873535%; background-color: hsl(21.227703094482422, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Some pilot plants have demonstrated that combining concentrated solar power (CSP) with desalination can be economically viable under specific conditions.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.193</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 19.319355487823486%; background-color: hsl(23.183226585388184, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Research into alternative desalination techniques, such as forward osmosis or solar stills, is also ongoing.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.209</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 20.853161811828613%; background-color: hsl(25.023794174194336, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Integrating renewable energy sources like solar or wind into desalination processes offers a promising path forward.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Some pilot plants have demonstrated that combining concentrated solar power (CSP) with desalination can be economically viable under specific conditions.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.115</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 11.500567197799683%; background-color: hsl(13.80068063735962, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The future of desalination technology is likely to focus on improving energy efficiency and reducing costs.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.125</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 12.492126226425171%; background-color: hsl(14.990551471710205, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.137</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 13.698220252990723%; background-color: hsl(16.437864303588867, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Additionally, hybrid systems that combine multiple desalination methods may offer better overall efficiency.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.140</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 13.997495174407959%; background-color: hsl(16.79699420928955, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Solar-powered reverse osmosis and hybrid systems that combine concentrated solar power with desalination can lower greenhouse gas emissions.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Renewable energy integration with desalination can significantly reduce greenhouse gas emissions.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.102</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 10.181522369384766%; background-color: hsl(12.217826843261719, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Some pilot plants have demonstrated that combining concentrated solar power (CSP) with desalination can be economically viable under specific conditions.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.102</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 10.20658016204834%; background-color: hsl(12.247896194458008, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Additionally, hybrid systems that combine multiple desalination methods may offer better overall efficiency.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.134</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 13.352370262145996%; background-color: hsl(16.022844314575195, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.152</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 15.174031257629395%; background-color: hsl(18.208837509155273, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>However, challenges such as the intermittency of renewable sources and the high initial investment must be addressed, potentially through energy storage technologies.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.144</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 14.437246322631836%; background-color: hsl(17.324695587158203, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Policymakers and researchers are working together to create frameworks that encourage sustainable practices in desalination, balancing the need for freshwater with environmental considerations.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.145</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 14.484268426895142%; background-color: hsl(17.38112211227417, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.158</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 15.800923109054565%; background-color: hsl(18.96110773086548, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Solar-powered reverse osmosis is one promising technology, but its widespread adoption faces challenges like intermittency of sunlight and high upfront costs.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.171</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 17.13901162147522%; background-color: hsl(20.566813945770264, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Despite these innovations, desalination alone is unlikely to fully solve global water scarcity.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.131</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 13.105857372283936%; background-color: hsl(15.727028846740723, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Renewable energy integration with desalination can significantly reduce greenhouse gas emissions.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.143</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 14.305073022842407%; background-color: hsl(17.16608762741089, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            The future of desalination technology is likely to focus on improving energy efficiency and reducing costs.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.176</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 17.619478702545166%; background-color: hsl(21.1433744430542, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Researchers are exploring ways to minimize environmental harm, including diluting brine before discharge or extracting valuable minerals from it.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.185</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 18.468868732452393%; background-color: hsl(22.16264247894287, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Complementary strategies such as wastewater recycling, rainwater harvesting, and better water management are necessary.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.047</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 4.705536365509033%; background-color: hsl(5.64664363861084, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Policymakers and researchers are working together to create frameworks that encourage sustainable practices in desalination, balancing the need for freshwater with environmental considerations.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.174</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 17.44334101676941%; background-color: hsl(20.93200922012329, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Researchers are exploring ways to minimize environmental harm, including diluting brine before discharge or extracting valuable minerals from it.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.180</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 18.0209219455719%; background-color: hsl(21.62510633468628, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.202</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 20.186370611190796%; background-color: hsl(24.223644733428955, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            
+            <div class='sentence-card'>
+                <div class='response-sentence'>
+                    <svg class="quote-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" />
+                    </svg>
+                    <span>Moreover, ensuring equitable access and community engagement is crucial to make desalination solutions both sustainable and inclusive.</span>
+                </div>
+                <div class='similar-contexts'>
+                    <h4>Most similar context sentences</h4>
+                    <ul>
+            
+                    <li class="primary">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Policymakers and researchers are working together to create frameworks that encourage sustainable practices in desalination, balancing the need for freshwater with environmental considerations.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.124</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 12.433874607086182%; background-color: hsl(14.920649528503418, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Moreover, community involvement and equitable access are critical to ensure that new technologies benefit all socioeconomic groups, not just wealthier populations.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.131</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 13.103640079498291%; background-color: hsl(15.72436809539795, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.173</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 17.296159267425537%; background-color: hsl(20.755391120910645, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    <li class="">
+                        <div class='context-sentence'>
+                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                            </svg>
+                            Renewable energy integration with desalination can significantly reduce greenhouse gas emissions.
+                        </div>
+                        <div class='similarity-container'>
+                            <div class='similarity-score'>Similarity: <strong>0.216</strong></div>
+                            <div class='similarity-bar-container'>
+                                <div class='similarity-bar' style='width: 21.577376127243042%; background-color: hsl(25.89285135269165, 80%, 45%);'></div>
+                            </div>
+                        </div>
+                    </li>
+                
+                    </ul>
+                </div>
+            </div>
+            </div></div>
             
         </div>
     </body>

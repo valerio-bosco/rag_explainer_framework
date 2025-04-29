@@ -390,7 +390,7 @@ def analyze_rag(context, query, response, analyze_permutations=True, num_permuta
     # Analyze wich top k sentences in the context chunks 
     sentence_impact = defaultdict(float)
     threads = []
-    k = 3
+    k = 4
     for i, chunk in enumerate(context):
         print(f"Processing chunk {i+1}/{len(context)}: {chunk[:50]}...")
         thread = RagThread(target=explain_by_sentence, args=(chunk, response,k))

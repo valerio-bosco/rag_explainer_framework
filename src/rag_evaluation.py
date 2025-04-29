@@ -152,28 +152,28 @@ def remove_and_compute(sentences, original_response_embedding, category, sentenc
 
 
     
-def explain_by_token_removal(context, query, response):
+def explain_by_token_removal(chunk, query, response):
     """
-    Explains the influence of each token in the context and query
+    Explains the influence of each token in the chunk and query
     by measuring the change in embedding distance of the response
     when each token is removed.
     """
     response_embedding = es.get_embedding(response) # Embedding of the actual RAG response
     query_embedding = es.get_embedding(query)
     
-    context_sentences = tokenize_and_filter(context)
+    chunk_sentences = tokenize_and_filter(chunk)
     query_sentences = tokenize_and_filter(query)
     
     token_impact = defaultdict(list)
 
-    print("Analyzing context tokens wrt response...")
-    remove_and_compute(context_sentences, response_embedding, "context", token_impact, query)
+    print("Analyzing chunk tokens wrt response...")
+    remove_and_compute(chunk_sentences, response_embedding, "context", token_impact, query)
     
-    print("Analyzing context tokens wrt query...")
-    remove_and_compute(context_sentences, query_embedding, "context", token_impact, query)
+    print("Analyzing chunk tokens wrt query...")
+    remove_and_compute(chunk_sentences, query_embedding, "context", token_impact, query)
 
     print("Analyzing query tokens wrt response...")
-    remove_and_compute(query_sentences, response_embedding, "query", token_impact, context) 
+    remove_and_compute(query_sentences, response_embedding, "query", token_impact, chunk) 
    
     for key in  token_impact.keys():
         token_impact[key] = np.mean(token_impact[key])
@@ -181,6 +181,40 @@ def explain_by_token_removal(context, query, response):
 
     return token_impact
 
+def explain_by_sentence(chunk, response,k):
+    """
+    Explains the influence of each sentence in the chunk by measuring
+    the change in embedding distance of the response when each sentence is removed.
+    """
+    chunk_sentences = tokenize_and_filter(chunk)
+    response_sentences = tokenize_and_filter(response)
+    
+    sentence_impact = defaultdict(tuple)
+    for response_sentence in response_sentences:
+        sentence_hash = hashlib.md5(response_sentence.encode()).hexdigest()
+        key = f"sentence_{sentence_hash}"
+        response_sentence_embedding = es.get_embedding(response_sentence)
+
+        for chunk_sentence in chunk_sentences:
+            # Create a hash of the sentence for consistent key generation
+            chunk_sentence_embedding = es.get_embedding(chunk_sentence)
+            distance_change = es.calculate_distance(chunk_sentence_embedding, response_sentence_embedding)
+            tuple_response_chunk = (chunk_sentence, distance_change)
+            if key in sentence_impact :
+                if len(sentence_impact[key]) < k:
+                    sentence_impact[key].append(tuple_response_chunk)
+                else:
+                    for(s, d) in sentence_impact[key]:
+                        if d > distance_change:
+                            sentence_impact[key].remove((s, d))
+                            sentence_impact[key].append(tuple_response_chunk)
+                            break                    
+            else:
+                sentence_impact[key] = [tuple_response_chunk]
+            sentence_impact[key] = sorted(sentence_impact[key], key=lambda x: x[1])# Keep only top k sentences
+    
+    return sentence_impact
+    
 def explain_by_context_permutation(context, query, response, num_permutations=5):
     """
     Explains the influence of context syntactic formulation by measuring
@@ -353,7 +387,33 @@ def analyze_rag(context, query, response, analyze_permutations=True, num_permuta
         test = threads[i].join()
         token_impact.update(test)
         
-
+    # Analyze wich top k sentences in the context chunks 
+    sentence_impact = defaultdict(float)
+    threads = []
+    k = 3
+    for i, chunk in enumerate(context):
+        print(f"Processing chunk {i+1}/{len(context)}: {chunk[:50]}...")
+        thread = RagThread(target=explain_by_sentence, args=(chunk, response,k))
+        thread.start()
+        threads.append(thread)
+    
+    
+    for i in range(len(context)):
+        test = threads[i].join()
+        # results from each thread are merged into the main dictionary with the tuples updated depending on the distance values, every thread returns a dictionary which for each key has an array of tuples with the sentence and the distance value
+        for key, value in test.items():
+            if key in sentence_impact:
+                sentence_impact[key].extend(value)
+            else:
+                sentence_impact[key] = value
+    
+    
+    # sort the dictionary by distance value
+    for key in sentence_impact.keys():
+        sentence_impact[key] = sorted(sentence_impact[key], key=lambda x: x[1])[:k]     
+    
+    
+        
     # Analyze permutations if requested
     permutation_impact = {}
     if analyze_permutations:
@@ -368,6 +428,7 @@ def analyze_rag(context, query, response, analyze_permutations=True, num_permuta
     return {
         "token_impact": token_impact,
         "permutation_impact": permutation_impact,
+        "sentence_impact": sentence_impact,
         "thresholds": thresholds,
         "context": context,
         "query": query,

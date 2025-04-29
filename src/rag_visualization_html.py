@@ -194,6 +194,7 @@ def visualize_results_html(analysis_results):
         HTML string representation of the analysis
     """
     token_impact = analysis_results["token_impact"]
+    sentence_impact = analysis_results["sentence_impact"]
     context = analysis_results["context"]
     query = analysis_results["query"]
     response = analysis_results["response"]
@@ -265,6 +266,22 @@ def visualize_results_html(analysis_results):
             # If token not found in query impacts, add it without highlighting
             query_html.append(token)
     
+    response_senteces = tokenize_and_filter(response)
+    response_sentence_impacts = {k: v for k, v in sentence_impact.items() if k.startswith("sentence_")}
+    response_html = []
+    for sentence in response_senteces:
+        sentence_hash = "sentence_" + hashlib.md5(sentence.encode()).hexdigest()
+        if sentence_hash in response_sentence_impacts.keys():
+            impact_value_tuples = response_sentence_impacts[sentence_hash]
+            impact_value_tuples = sorted(impact_value_tuples, key=lambda x: float(x[1]))
+            #these are the chunk sentences that are more similar to the response sentence
+            response_html.append(f"<h2>{sentence}</h2>")
+            for tuple in impact_value_tuples:
+                chunk_sentence = tuple[0]
+                impact_value = tuple[1]
+                span = f'<span>{chunk_sentence}: {impact_value}</span></br>'
+                response_html.append(span) 
+        
    
     
     # Format permutation impact information if available
@@ -351,6 +368,7 @@ def visualize_results_html(analysis_results):
                 <h2>Response</h2>
                 <p>{response}</p>
             </div>    
+            {response_html}
             {permutation_html}
         </div>
     </body>

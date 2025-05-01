@@ -94,7 +94,7 @@ def visualize_results_html(analysis_results):
             opacity = min(0.9, max(0.15, percentage/100))
             
             # Create span with tooltip showing impact percentage
-            span = f'<span class="highlight" style="background-color: {color}; opacity: {opacity};" data-impact="{percentage:.2f}%">{token}</span>'
+            span = f'<span class="highlight" style="background-color: {color}; {"color:white;" if color== "blue" else ""} opacity: {opacity};" data-impact="{percentage:.2f}%">{token}</span>'
             query_html.append(span) 
         else:
             # If token not found in query impacts, add it without highlighting
@@ -139,9 +139,6 @@ def visualize_results_html(analysis_results):
                 response_html += f"""
                     <li class="{'primary' if idx == 0 else ''}">
                         <div class='context-sentence'>
-                            <svg class="link-icon" viewBox="0 0 24 24" width="16" height="16">
-                                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
-                            </svg>
                             {context_sentence}
                         </div>
                         <div class='similarity-container'>

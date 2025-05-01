@@ -1,9 +1,9 @@
 # main.py
-from rag_evaluation import analyze_rag
+import hashlib
+from rag_evaluation import analyze_rag, tokenize_and_filter
 from embedding_service import get_embedding
 from rag_visualization_html import save_html_report
-from rag_plotting import plot_token_embeddings, plot_token_impact_distribution
-
+from rag_plotting import plot_embeddings
 def run_analysis(context, query, response, analyze_permutations=True, num_permutations=5, 
                 generate_html=True, generate_plots=True, html_filename="rag_explanation.html"):
     """
@@ -26,7 +26,7 @@ def run_analysis(context, query, response, analyze_permutations=True, num_permut
         analyze_permutations=analyze_permutations,
         num_permutations=num_permutations
     )
-    
+    impact_filter=(0.9, 1)
     # Print token impact results
     print("\nToken Impact:")
     for token, impact in sorted(analysis_results["token_impact"].items(), key=lambda item: item[1], reverse=True):
@@ -42,26 +42,69 @@ def run_analysis(context, query, response, analyze_permutations=True, num_permut
     if generate_html:
         save_html_report(analysis_results, filename=html_filename)
     
+    context_impacts  = {k: v for k,v in analysis_results["token_impact"].items() if k.startswith("context_") }
+    def calculate_percentage(value, impact_dict):
+        if not impact_dict:
+            return 0
+        max_value = max(float(v) for v in impact_dict.values()) 
+        max_value = max(max_value, 1)  # Avoid division by zero 
+        min_value = min(float(v) for v in impact_dict.values())
+        min_value = min(min_value, -1)  # Avoid division by zero
+        
+        if max_value == 0:
+            return 0
+        return (float(value)-min_value) / (max_value- min_value) 
+    filtered_context_impacts = {k:v for k,v in context_impacts.items() if calculate_percentage(v, context_impacts) > impact_filter[0] and calculate_percentage(v, context_impacts) <= impact_filter[1] }
+    pseudo_response=""
+    for chunk in context:
+        chunk_sentences = tokenize_and_filter(chunk)
+        for sentence in chunk_sentences:
+            hash = f"context_{hashlib.md5(sentence.encode()).hexdigest()}"
+            if hash in filtered_context_impacts.keys():
+                pseudo_response += sentence
+                
+    analysis_results["pseudo_response"] = pseudo_response
     # Generate plots if requested
-    # if generate_plots:
-    #     plot_token_embeddings(analysis_results, get_embedding)
+    if generate_plots:
+        plot_embeddings(analysis_results, get_embedding, impact_filter=impact_filter)
     
     # # Return analysis results for further use
     # plot_token_impact_distribution(analysis_results)
     return analysis_results
 
 if __name__ == "__main__":
-    # Example usage
-    contexts = [
-        "The process of desalination involves removing salt and other minerals from seawater to make it suitable for human consumption or irrigation. The two main methods are thermal distillation and membrane processes such as reverse osmosis. Thermal distillation mimics the natural water cycle by heating water until it evaporates, then condensing it back into liquid form. Reverse osmosis, on the other hand, forces water through a semipermeable membrane that blocks salt and other impurities. Each method has its own set of advantages and limitations in terms of energy consumption, cost, and environmental impact.",
-        "Desalination plants are critical in arid regions where freshwater resources are limited. However, they are energy-intensive, often relying on fossil fuels, which raises concerns about their carbon footprint. Some newer facilities are integrating renewable energy sources like solar or wind to power their operations. Another major issue is brine disposal: the concentrated saltwater byproduct must be managed carefully to avoid damaging marine ecosystems. Researchers are exploring ways to minimize environmental harm, including diluting brine before discharge or extracting valuable minerals from it.",
-        "Renewable energy integration with desalination can significantly reduce greenhouse gas emissions. Solar-powered reverse osmosis is one promising technology, but its widespread adoption faces challenges like intermittency of sunlight and high upfront costs. Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available. Some pilot plants have demonstrated that combining concentrated solar power (CSP) with desalination can be economically viable under specific conditions.",
-        "The future of desalination technology is likely to focus on improving energy efficiency and reducing costs. Innovations in membrane materials and designs are expected to enhance the performance of reverse osmosis systems. Additionally, hybrid systems that combine multiple desalination methods may offer better overall efficiency. Research into alternative desalination techniques, such as forward osmosis or solar stills, is also ongoing. Policymakers and researchers are working together to create frameworks that encourage sustainable practices in desalination, balancing the need for freshwater with environmental considerations.",
-        "Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority. While desalination can help meet demand, it is not a silver bullet. Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel. Moreover, community involvement and equitable access are critical to ensure that new technologies benefit all socioeconomic groups, not just wealthier populations."
-    ]   
-    query = "Explain how modern desalination technologies work, what their main environmental impacts are, and how renewable energy can help address these issues. Also, discuss whether desalination alone is a viable long-term solution to global water scarcity."
-    response = "Modern desalination technologies aim to remove salts and other impurities from seawater to make it suitable for human use. The two primary methods are thermal distillation and reverse osmosis. In thermal distillation, water is heated to create vapor, which is then condensed back into liquid form, mimicking the natural water cycle. In reverse osmosis, water is forced through a semipermeable membrane that blocks salts and other contaminants. Each technique has trade-offs in terms of energy consumption, cost, and environmental effects. Desalination plants, while essential in water-scarce regions, have significant environmental impacts. They are highly energy-intensive, often depending on fossil fuels, which contributes to carbon emissions. Additionally, the brine produced as a byproduct poses a risk to marine ecosystems if not properly managed. Some facilities have adopted strategies like brine dilution or mineral extraction to mitigate these effects. Integrating renewable energy sources like solar or wind into desalination processes offers a promising path forward. Solar-powered reverse osmosis and hybrid systems that combine concentrated solar power with desalination can lower greenhouse gas emissions. However, challenges such as the intermittency of renewable sources and the high initial investment must be addressed, potentially through energy storage technologies. Despite these innovations, desalination alone is unlikely to fully solve global water scarcity. Complementary strategies such as wastewater recycling, rainwater harvesting, and better water management are necessary. Moreover, ensuring equitable access and community engagement is crucial to make desalination solutions both sustainable and inclusive."
+  
+    # Example usage-1 
+    # contexts = [
+    #     "The process of desalination involves removing salt and other minerals from seawater to make it suitable for human consumption or irrigation. The two main methods are thermal distillation and membrane processes such as reverse osmosis. Thermal distillation mimics the natural water cycle by heating water until it evaporates, then condensing it back into liquid form. Reverse osmosis, on the other hand, forces water through a semipermeable membrane that blocks salt and other impurities. Each method has its own set of advantages and limitations in terms of energy consumption, cost, and environmental impact.",
+    #     "Desalination plants are critical in arid regions where freshwater resources are limited. However, they are energy-intensive, often relying on fossil fuels, which raises concerns about their carbon footprint. Some newer facilities are integrating renewable energy sources like solar or wind to power their operations. Another major issue is brine disposal: the concentrated saltwater byproduct must be managed carefully to avoid damaging marine ecosystems. Researchers are exploring ways to minimize environmental harm, including diluting brine before discharge or extracting valuable minerals from it.",
+    #     "Renewable energy integration with desalination can significantly reduce greenhouse gas emissions. Solar-powered reverse osmosis is one promising technology, but its widespread adoption faces challenges like intermittency of sunlight and high upfront costs. Energy storage solutions, such as batteries or thermal storage systems, are being developed to enable continuous operation even when renewable sources are not available. Some pilot plants have demonstrated that combining concentrated solar power (CSP) with desalination can be economically viable under specific conditions.",
+    #     "The future of desalination technology is likely to focus on improving energy efficiency and reducing costs. Innovations in membrane materials and designs are expected to enhance the performance of reverse osmosis systems. Additionally, hybrid systems that combine multiple desalination methods may offer better overall efficiency. Research into alternative desalination techniques, such as forward osmosis or solar stills, is also ongoing. Policymakers and researchers are working together to create frameworks that encourage sustainable practices in desalination, balancing the need for freshwater with environmental considerations.",
+    #     "Water scarcity is projected to affect nearly half of the global population by 2030, making sustainable water sourcing a top priority. While desalination can help meet demand, it is not a silver bullet. Alternatives like wastewater recycling, rainwater harvesting, and improved water management practices must also be pursued in parallel. Moreover, community involvement and equitable access are critical to ensure that new technologies benefit all socioeconomic groups, not just wealthier populations."
+    # ]   
+    # query = "Explain how modern desalination technologies work, what their main environmental impacts are, and how renewable energy can help address these issues. Also, discuss whether desalination alone is a viable long-term solution to global water scarcity."
+    # response = "Modern desalination technologies aim to remove salts and other impurities from seawater to make it suitable for human use. The two primary methods are thermal distillation and reverse osmosis. In thermal distillation, water is heated to create vapor, which is then condensed back into liquid form, mimicking the natural water cycle. In reverse osmosis, water is forced through a semipermeable membrane that blocks salts and other contaminants. Each technique has trade-offs in terms of energy consumption, cost, and environmental effects. Desalination plants, while essential in water-scarce regions, have significant environmental impacts. They are highly energy-intensive, often depending on fossil fuels, which contributes to carbon emissions. Additionally, the brine produced as a byproduct poses a risk to marine ecosystems if not properly managed. Some facilities have adopted strategies like brine dilution or mineral extraction to mitigate these effects. Integrating renewable energy sources like solar or wind into desalination processes offers a promising path forward. Solar-powered reverse osmosis and hybrid systems that combine concentrated solar power with desalination can lower greenhouse gas emissions. However, challenges such as the intermittency of renewable sources and the high initial investment must be addressed, potentially through energy storage technologies. Despite these innovations, desalination alone is unlikely to fully solve global water scarcity. Complementary strategies such as wastewater recycling, rainwater harvesting, and better water management are necessary. Moreover, ensuring equitable access and community engagement is crucial to make desalination solutions both sustainable and inclusive."
     # Run full analysis with all visualizations
+    
+    #example usage 2
+    # contexts = [
+    #     "The COVID-19 pandemic disrupted nearly every aspect of global trade. Lockdowns led to sudden factory shutdowns in key manufacturing hubs such as China and Vietnam. Shipping containers were stranded in the wrong ports, causing logistical delays. Some companies experienced increased demand for essential goods, while others saw sharp declines. These mismatches made planning difficult and unpredictable.",
+    #     "Companies quickly began looking for alternative sourcing strategies. For example, many firms shifted from just-in-time to just-in-case inventory models to improve resilience. Investments in digital supply chain technologies, like AI forecasting tools, also accelerated. However, small and medium-sized enterprises struggled to keep up due to limited capital and technical expertise.",
+    #     "Global supply chain issues were also impacted by geopolitical tensions unrelated to the pandemic, such as Brexit and the US-China trade war. These factors exacerbated existing fragilities but were not the primary cause of the COVID-specific disruption. Labor shortages due to illness and quarantine also played a significant role.",
+    #     "Environmental factors such as droughts and hurricanes affected shipping routes and agricultural production, contributing to delays and shortages. However, these were secondary compared to the sudden changes in consumer demand and supplier availability triggered by the pandemic."
+    # ]
+    # query = "What were the main causes of the global supply chain crisis during the COVID-19 pandemic, and how did companies adapt to these disruptions?"
+    # response = "The global supply chain crisis during COVID-19 was driven by factory shutdowns, shipping disruptions, and mismatches in supply and demand. Companies adapted by adopting more resilient inventory strategies and accelerating digital transformation. Labor shortages due to quarantine also worsened the situation."
+    
+    contexts =[
+        "Climate migration refers to the movement of people forced to leave their homes due to extreme weather events, sea-level rise, drought, or other climate-related factors. The World Bank estimates that over 200 million people could be displaced internally by 2050 due to climate impacts. While most migration is currently internal, cross-border displacement is expected to rise as climate impacts intensify. Cities are often the primary destinations for displaced populations, as they offer better access to jobs, services, and infrastructure.",
+        "Urban planners are adjusting zoning laws, expanding public housing, and upgrading informal settlements to absorb growing migrant populations. In Bangladesh, Dhaka has introduced floating housing and flood-resilient infrastructure in response to rising river levels and rural-to-urban migration. In the U.S., cities like Miami are investing in elevated roads and stormwater management to counter both sea-level rise and population pressures. However, many cities still lack coordinated migration strategies and face funding constraints.",
+        "Climate migration also creates long-term governance challenges. In developing countries, weak local institutions may struggle to keep up with rapid population growth. In wealthier nations, political opposition to perceived “climate refugees” has led to polarization and stricter border policies. Some urban planners advocate for integrating climate adaptation with inclusive urban design, ensuring that both locals and migrants benefit from resilience investments. Community participation has shown to increase the success of such programs.",
+        "Technology also plays a role. GIS mapping is used to identify at-risk zones and plan resettlement, while mobile data helps monitor migration flows in real time. However, digital tools cannot substitute for inclusive governance and proactive planning. Some critics warn that technology-driven strategies risk excluding vulnerable populations who lack digital access or literacy."
+    ]
+    query = "In the context of increasing climate-related migration, how are urban planners adapting infrastructure and policy to accommodate displaced populations? Provide examples of strategies used in both developing and developed countries, and discuss potential long-term implications."
+    
+    response =  "As climate change accelerates, more people are being displaced by extreme weather, drought, and sea-level rise. Urban planners are taking steps to accommodate this influx by adapting infrastructure and updating policies. In cities like Dhaka, flood-resilient housing and innovative floating structures have been implemented to support rural migrants. Meanwhile, Miami and other U.S. cities are investing in adaptive infrastructure like stormwater systems and raised roads to manage both environmental and population pressures. These efforts are supported by zoning law changes and informal settlement upgrades to prevent overcrowding. However, in both developing and developed nations, challenges remain: inadequate governance, funding limitations, and political resistance complicate migration planning. In some countries, backlash against “climate refugees” has hindered policy progress. To address these long-term issues, experts emphasize integrating urban design with climate resilience in an inclusive way, involving communities in decision-making. Tools like GIS mapping and mobile tracking can aid planning but must be paired with policies that prioritize equity and accessibility. Overall, while efforts are underway, a global framework for climate migration in urban settings is still lacking."
     run_analysis(
         context=contexts,
         query=query,

@@ -7,24 +7,6 @@ import embedding_service as es
 import hashlib
 
 from rag_thread import RagThread
-
-# def tokenize_and_filter(text):
-    # """Tokenizes text and filters out stop words and punctuation."""
-    # tokenizer_nlp = es.get_tokenizer_nlp()
-    # if tokenizer_nlp == 'fallback':
-    #      # Basic fallback if spaCy isn't available
-    #      tokens = text.lower().split()
-    #      # Very basic stop word list (expand if needed)
-    #      stop_words = {"a", "an", "the", "is", "in", "it", "of", "and", "to"}
-    #      punct = set(".,!?;:'\"()[]{}")
-    #      filtered_tokens = [t for t in tokens if t not in stop_words and not all(c in punct for c in t)]
-    #      return filtered_tokens
-
-    # # Use spaCy for robust tokenization
-    # doc = tokenizer_nlp(text)
-    # filtered_tokens = [token.text for token in doc if not token.is_stop and not token.is_punct and not token.is_space]
-    # return filtered_tokens
-
 def tokenize_and_filter(text):
     """Splits text into sentences instead of tokens."""
     tokenizer_nlp = es.get_tokenizer_nlp()
@@ -57,47 +39,6 @@ def rag_simulate(context, query):
     of this "simulated" response.
     """
     return f"Context: {context} Query: {query}"
-
-# def remove_and_compute(sentence_tokens, original_response_embedding, category, token_impact_dict, original_query):
-    """
-    Computes the impact of removing each token.
-    Note: This implementation measures the change in the embedding of the *remaining text*
-    compared to the *original full response embedding*. This is one way to interpret impact.
-    An alternative would be to re-simulate the RAG response with the modified text.
-    """
-    # temp_dict = defaultdict(list)
-    # for i, token_to_remove in enumerate(sentence_tokens):
-    #     # Create the text with the token removed
-    #     temp_text_list = [t for j, t in enumerate(sentence_tokens) if i != j]
-    #     temp_text = " ".join(temp_text_list)
-
-    #     impact_values = []
-    #     if temp_text.strip():
-    #          # Get embedding of the text *after* removing the token
-    #         temp_embedding = es.get_embedding(temp_text)
-
-    #         # Calculate distance change compared to the *original* response embedding
-    #         distance_change = es.calculate_distance(temp_embedding, original_response_embedding)
-    #         key = f"{category}_{token_to_remove}"
-    #         if(temp_dict[key]):
-    #             temp_dict[key].append(distance_change)
-                
-    #         else:
-    #             temp_dict[key] = [distance_change]
-    #         impact_values.append(distance_change)
-                
-    #     else:
-    #         # If removing the token leaves the text empty
-    #          temp_dict[f"{category}_{token_to_remove}"] = es.calculate_distance(es.get_embedding(""), original_response_embedding) # Distance from empty embedding
-
-    # mean_impact = np.mean(impact_values)
-     
-    # print(mean_impact)
-    # for key in temp_dict.keys():
-    #     if(token_impact_dict[key]):
-    #          token_impact_dict[key].append((np.mean(temp_dict[key]) - mean_impact))
-    #     else:
-    #         token_impact_dict[key]=[(np.mean(temp_dict[key]) - mean_impact)]
 
 def remove_and_compute(sentences, original_response_embedding, category, sentence_impact_dict, original_query):
     """

@@ -29,6 +29,7 @@ def tokenize_and_filter(text):
     sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
     
     return sentences
+
 def rag_simulate(context, query):
     """
     A very basic simulation of a RAG system.
